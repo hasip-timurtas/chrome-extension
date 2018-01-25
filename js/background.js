@@ -28,18 +28,28 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       console.log("Site coinexchange ve trades ise");
     }
 
-
-    if (tab.url.split("/")[3] == "login") {
-      LogoutBildir();
-
-      console.log("Site coinexchange ve Login");
-    }
-
     if (tab.url.split("/")[3] == "balances") {
 
       _isPaused = false // Balance Sayfasına giderse kaldığıyerden devam et.
       console.log("Timer Kaldığı Yerden devam ediyor.")
     }
+
+    if (tab.url.split("/")[3] == "login") {
+
+      LogoutBildir();
+      console.log("Site coinexchange ve Login");
+    }
+
+    /*
+    if (tab.url.split("/")[3] == "login#noreload") {
+      chrome.tabs.executeScript(tabId, {
+        code: `setTimeout("setTimeout("document.getElementById('username').click(); document.getElementById('password').click(); document.getElementById('remember_me').checked = true; document.getElementById('_submit').click();", 1000 * 5)`,
+        runAt: "document_end"
+      });
+    }
+
+*/
+
   }
 });
 
@@ -57,10 +67,15 @@ async function LogoutBildir() {
     url += "/";
     url += _access_token;
 
-    var result = await axios(url);
+    await axios(url);
+
+    chrome.tabs.create({
+      active: true,
+      url: "https://www.coinexchange.io/login#noreload"
+    });
   }
 
-  setTimeout(SendSms, 1000 * 30);
+  setTimeout(SendSms, 1000 * 60);
 
   chrome.tabs.query({
     url: "https://www.coinexchange.io/market/*/*?*"
@@ -70,6 +85,15 @@ async function LogoutBildir() {
     });
   });
 
+  /*
+    chrome.tabs.query({
+      url: "https://www.coinexchange.io/login"
+    }, function (tabs) {
+      tabs.forEach(function (tab) {
+        chrome.tabs.remove(tab.id);
+      });
+    });
+  */
   chrome.tabs.query({
     url: "https://www.coinexchange.io/trades/*"
   }, function (tabs) {
@@ -78,8 +102,6 @@ async function LogoutBildir() {
     });
   });
 }
-
-
 
 $(document).ready(function () {
   $("body").load('https://keskinmedia.com/api/background.php', function (data) {
@@ -100,7 +122,6 @@ $(document).ready(function () {
   });
 });
 
-
 function SayaciAktifEt() {
   var sayac = _sayacSuresi;
   setInterval(function () {
@@ -119,7 +140,6 @@ function Basla() {
   SayaciAktifEt();
   setInterval(GetMarkets, 1000 * _sayacSuresi);
 }
-
 
 async function LoginCheck() {
   var userName = $("#name").val();
@@ -142,7 +162,6 @@ async function LoginCheck() {
     } else {
       Basla();
     }
-
   }
 }
 
