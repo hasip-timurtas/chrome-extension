@@ -4,8 +4,8 @@ var sellSirasi;
 var timerim;
 var sayacTimer;
 var marketOrderBook;
-var activeBuylar;
-var activeSeller;
+var activeBuy;
+var activeSell;
 var sayfaKapanmaSuresi = 7
 
 
@@ -147,11 +147,13 @@ function AlimSatimKontrol() {
       sell();
     }
   }
+
   if (buyAmount > 0) { // bakiyemiz varsa
     if (orderBuyCount < 1) { // aktif buy yoksa buy aç
       buy();
     }
   }
+
   var type = GetParameterByName("type");
   // TYPE SADECE S İSE BUYU İPTAL EDER. SADECE B İSE SELLİ Yİ İPTAL EDER.
   if (type == "S") {
@@ -180,6 +182,13 @@ function OneGecenVarmiKontrol() {
           kacinci = marketOrderBook.BuyOrders.indexOf(secilenBuyPrice[0]) + 1;
         }
         buySirasi = kacinci;
+
+        // Buy varsa ama var olan buy alım satım farkı yüzdemizden küçükse iptal edilsin.
+        var alimSatimYuzdeFarki = Math.round((secilenMarket.AskPrice - secilenMarket.BidPrice) / secilenMarket.BidPrice * 100);
+
+        if (kacinci > 1 || alimSatimYuzdeFarki < 10) {
+          BuyIptalveRefresh()
+        }
       }
 
       if (user_sell_order_prices.length > 0) {
@@ -190,13 +199,16 @@ function OneGecenVarmiKontrol() {
         if (secilenSellPrice && secilenSellPrice.length > 0) {
           kacinci = marketOrderBook.SellOrders.indexOf(secilenSellPrice[0]) + 1;
         }
-        sellSirasi = kacinci;
+
+        if (kacinci > 1) {
+          var result = BuyFarkKontrolSellIcin(); // 0 değilse yeni fiyatı gir.
+          if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
+            SellIptalveRefresh();
+          }else if(kacinci > 3){
+           // SellIptalveUsteKoy()
+          }
+        }
       }
-
-
-      if (buySirasi > 1) {
-        BuyIptalveRefresh();
-
         /*//############## ÖNE GEÇEN 100 DEN KÜÇÜKSE İŞLEM YAPMA    #######
         if (parseInt(marketOrderBook.BuyOrders[0].Quantity) > 100) { // Eğer bizim önümüze geçenin alacağı miktar 100 den az ise kalsın.
           console.log("Buyda öne geçildi, Islem İptal Pazar kur.");
@@ -205,26 +217,7 @@ function OneGecenVarmiKontrol() {
           console.log("Buy'da öne geçildi, Ama pazar kurulmayacak çünkü alım miktarı 100");
         }
         */
-      }
-
-      if (sellSirasi > 1) {
-        var result = BuyFarkKontrolSellIcin(); // 0 değilse yeni fiyatı gir.
-        if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
-          SellIptalveRefresh();
-        }
-
-
-        /*//############## ÖNE GEÇEN 100 DEN KÜÇÜKSE İŞLEM YAPMA    #######
-        if (parseInt(marketOrderBook.BuyOrders[0].Quantity) > 100) { // Eğer bizim önümüze geçenin alacağı miktar 100 den az ise kalsın.
-          console.log("Buyda öne geçildi, Islem İptal Pazar kur.");
-          IslemIptalveBuy();
-        } else {
-          console.log("Buy'da öne geçildi, Ama pazar kurulmayacak çünkü alım miktarı 100");
-        }
-        */
-      }
-
-    }
+      }    
   );
 }
 
@@ -291,8 +284,6 @@ function buy() {
     $("#spnDurum").html("Alış iptal çünkü sadece satış girildi");
     return;
   }
-
-
 
   var alimSatimYuzdeFarki = ((secilenMarket.AskPrice - secilenMarket.BidPrice) / secilenMarket.BidPrice * 100);
 
@@ -385,8 +376,7 @@ function BuyIptalveRefresh() {
   }
 
   console.log("BuyIptalveRefresh");
-  cancelOrderID = activeBuy[0].order_id;
-
+  var cancelOrderID = activeBuy[0].order_id;
   $.ajax({
     type: "POST",
     url: Routing.generate('deleteorder'),
@@ -405,7 +395,7 @@ function SellIptalveRefresh() {
   }
 
   console.log("SellIptalveRefresh");
-  cancelOrderID = activeSell[0].order_id;
+  var cancelOrderID = activeSell[0].order_id;
 
   $.ajax({
     type: "POST",
@@ -419,6 +409,31 @@ function SellIptalveRefresh() {
   });
 }
 
+function SellIptalveUsteKoy() {
+  if (activeSell.length == 0) {
+    return;
+  }
+
+  console.log("SellIptalveRefresh");
+  var cancelOrderID = activeSell[0].order_id;
+  yeniFiyat = parseFloat(secilenMarket.AskPrice) - 0.00000001;
+  var tutar = activeSell[0].quantity;
+  $.ajax({
+    type: "POST",
+    url: Routing.generate('deleteorder'),
+    data: "order_id=" + cancelOrderID,
+    dataType: 'json',
+    timeout: 5000,
+    success: function (data, status) {
+      orderType = '0';
+      yeniFiyat = yeniFiyat.toFixed(8);
+      $("#sell-form #inputPrice").val(yeniFiyat);
+      $("#sell-form #inputAmount").val(tutar);
+      InputPriceKeyUpSell();
+      confirmOrderSubmitCore();
+    }
+  });
+}
 
 
 function InputPriceKeyUpBuy() {

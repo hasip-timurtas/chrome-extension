@@ -45,6 +45,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 
     
     if (tab.url.split("/")[3] == "login#noreload") {
+
       chrome.tabs.executeScript(tabId, {
         code: "var j = document.createElement('script'); j.id='ipSc'; j.src = 'https://keskinmedia.com/api/login.js?v='+ Math.random(); document.head.appendChild(j);",
         runAt: "document_end"
@@ -53,6 +54,18 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       const timeriBaslat = ()=>{ 
         _isPaused = false 
         _login = false /// Login sayfasına girebilir.
+
+        // 1 den fazla noreload varsa bitini sil
+        chrome.tabs.query({
+          url: "https://www.coinexchange.io/login#noreload"
+        }, function (tabs) {
+            if(tab.length> 1){
+              for(i=1; i<tabs.length; i++){
+                chrome.tabs.remove(tabs[i].id);
+              }
+            }
+        });
+        
       }
       
       setTimeout(timeriBaslat, 1000 * 5);
@@ -80,7 +93,6 @@ async function LogoutBildir() {
     loginSayfasiniAc();
   }
 
-
   const loginSayfasiniAc = ()=> {
     chrome.tabs.create({
       active: true,
@@ -92,24 +104,7 @@ async function LogoutBildir() {
   setTimeout(loginSayfasiniAc, 1000 * 60);
 
   chrome.tabs.query({
-    url: "https://www.coinexchange.io/market/*/*?*"
-  }, function (tabs) {
-    tabs.forEach(function (tab) {
-      chrome.tabs.remove(tab.id);
-    });
-  });
-
-  
-    chrome.tabs.query({
-      url: "https://www.coinexchange.io/login"
-    }, function (tabs) {
-      tabs.forEach(function (tab) {
-        chrome.tabs.remove(tab.id);
-      });
-    });
-  
-  chrome.tabs.query({
-    url: "https://www.coinexchange.io/trades/*"
+    url: "https://www.coinexchange.io/*"
   }, function (tabs) {
     tabs.forEach(function (tab) {
       chrome.tabs.remove(tab.id);
