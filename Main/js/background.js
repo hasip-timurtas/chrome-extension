@@ -99,11 +99,6 @@ async function LogoutBildir() {
   }
 
   const loginSayfasiniAc = () => {
-    chrome.tabs.create({
-      active: true,
-      url: "https://www.coinexchange.io/login?noreload=true&_userId=" + _userId
-    });
-
     chrome.tabs.query({
       url: "https://www.coinexchange.io/*"
     }, function (tabs) {
@@ -112,6 +107,11 @@ async function LogoutBildir() {
       });
     });
 
+
+    chrome.tabs.create({
+      active: true,
+      url: "https://www.coinexchange.io/login?noreload=true&_userId=" + _userId
+    });
   }
 
   //setTimeout(SendSms, 1000 * 60);
