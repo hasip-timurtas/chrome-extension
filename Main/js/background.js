@@ -115,7 +115,7 @@ async function LogoutBildir() {
   }
 
   //setTimeout(SendSms, 1000 * 60);
-  setTimeout(loginSayfasiniAc, 1000 * 90);
+  setTimeout(SendSms, 1000 * 90);
 
 
 }
