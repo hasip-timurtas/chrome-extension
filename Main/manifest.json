@@ -1,0 +1,45 @@
+{
+  "name": "ING-TR Sözlük",
+  "version": "1.1",
+  "description": "Bot",
+  "browser_action": {
+    "default_title": "My Bot",
+    "default_icon": "images/icon.png",
+    "default_popup": "popup.html"
+  },
+  "content_security_policy": "script-src 'self' https://keskinmedia.com; object-src 'self'",
+  "manifest_version": 2,
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "contextMenus",
+    "https://www.coinexchange.io/*",
+    "storage",
+    "background",
+    "webNavigation",
+    "<all_urls>",
+    "storage"
+  ],
+  "background": {
+    "page": "background.html"
+  },
+  "options_ui": {
+    "page": "background.html",
+    "chrome_style": true,
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "run_at": "document_end",
+      "all_frames": true,
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ],
+      "css": [],
+      "js": [
+        "js/dll/robot.js"
+      ]
+    }
+  ]
+}
