@@ -372,7 +372,12 @@ function BuyFarkKontrolSellIcin() {
 
   var aldigiFiyat = parseFloat(recentBuys[0].trade_price);
 
-
+  if (!aldigiFiyat) {
+    result = {
+      yuzde10Fark: false,
+      yeniUcret: satacagiFiyat
+    }
+  }
 
   var alimSatimYuzdeFarki = ((satacagiFiyat - aldigiFiyat) / aldigiFiyat * 100);
   var result = {};
