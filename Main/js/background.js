@@ -7,6 +7,14 @@ var _login = false;
 var _userId;
 
 
+function UygulamayiBaslat() {
+  _isPaused = false
+}
+
+function UygulamayiDurdur() {
+  _isPaused = true
+}
+
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   if (_userId && tab.url.indexOf("https://www.coinexchange.io/") > -1 && changeInfo.status === "complete") {
     console.log("_userId: " + _userId)
@@ -29,8 +37,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     }
 
     if (tab.url.includes("/balances")) {
-
-      _isPaused = false // Balance Sayfasına giderse kaldığıyerden devam et.
+      UygulamayiBaslat() // Balance Sayfasına giderse kaldığıyerden devam et.
       console.log("Timer Kaldığı Yerden devam ediyor.")
     }
 
@@ -55,22 +62,8 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       });
 
       const timeriBaslat = () => {
-        _isPaused = false
+        UygulamayiBaslat()
         _login = false /// Login sayfasına girebilir.
-
-        // 1 den fazla noreload varsa bitini si
-        /*
-        chrome.tabs.query({
-          url: "https://www.coinexchange.io/login#noreload"
-        }, function (tabs) {
-          if (tab.length > 1) {
-            for (i = 1; i < tabs.length; i++) {
-              chrome.tabs.remove(tabs[i].id);
-            }
-          }
-        });
-        */
-
       }
 
       setTimeout(timeriBaslat, 1000 * 5);
@@ -83,8 +76,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 
 async function LogoutBildir() {
 
-  _isPaused = true
-
+  UygulamayiDurdur()
   // SEND SMS ŞUANLIK DEAKTİF!
   const SendSms = async () => {
     //  http://keskinmedia.com/apim/sendlogout/2/8f03c10593f0abadef0b3084ba560826
@@ -116,7 +108,7 @@ async function LogoutBildir() {
 
   //setTimeout(SendSms, 1000 * 60);
   setTimeout(SendSms, 1000 * 90);
-
+  setTimeout(UygulamayiBaslat, 1000 * 60 * 5); // Eğer olduda Ana timerimiz başlamazsa 5 dakika sonra tekrar başlat 
 
 }
 
