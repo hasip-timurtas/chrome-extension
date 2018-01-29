@@ -7,7 +7,7 @@ var marketOrderBook;
 var activeBuy;
 var activeSell;
 var sayfaKapanmaSuresi = 10
-
+var _sellSirasi = 5 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
 
 function SayfayiTemizle() {
   console.log("Sayfayi Temizle");
@@ -215,7 +215,7 @@ async function OneGecenVarmiKontrol() {
     BuyIptalveRefresh()
   }
 
-  if (data.sellSirasi > 4) {
+  if (data.sellSirasi > _sellSirasi) {
     SellIptalveUsteKoy()
     return
   }
@@ -370,14 +370,14 @@ function BuyFarkKontrolSellIcin() {
     return e.trade_direction == "buy"
   });
 
-  var aldigiFiyat = parseFloat(recentBuys[0].trade_price);
-
-  if (!aldigiFiyat) {
-    result = {
+  if (!recentBuys[0]) {
+    return result = {
       yuzde10Fark: false,
       yeniUcret: satacagiFiyat
     }
   }
+
+  var aldigiFiyat = parseFloat(recentBuys[0].trade_price);
 
   var alimSatimYuzdeFarki = ((satacagiFiyat - aldigiFiyat) / aldigiFiyat * 100);
   var result = {};

