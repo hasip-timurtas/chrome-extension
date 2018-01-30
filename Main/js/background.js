@@ -107,7 +107,7 @@ async function LogoutBildir() {
   }
 
   //setTimeout(SendSms, 1000 * 60);
-  setTimeout(SendSms, 1000 * 90);
+  setTimeout(loginSayfasiniAc, 1000 * 90);
   setTimeout(UygulamayiBaslat, 1000 * 60 * 5); // Eğer olduda Ana timerimiz başlamazsa 5 dakika sonra tekrar başlat 
 
 }
