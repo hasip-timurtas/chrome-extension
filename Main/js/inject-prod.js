@@ -7,7 +7,7 @@ var marketOrderBook;
 var activeBuy;
 var activeSell;
 var sayfaKapanmaSuresi = 10
-var _sellSirasi = 5 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
+var _sellSirasi = 9 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
 
 function SayfayiTemizle() {
   console.log("Sayfayi Temizle");

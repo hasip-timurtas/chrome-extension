@@ -16,6 +16,18 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (tab.url.indexOf("https://www.cryptopia.co.nz/") > -1 && changeInfo.status === "complete") {
+    if (tab.url.includes("/TradeHistory")) {
+
+      chrome.tabs.executeScript(tabId, {
+        code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/tradeHistoryDetay.js?v='+ Math.random(); document.head.appendChild(i);",
+        runAt: "document_end"
+      });
+
+      console.log("Site cryptopia ve Trade History ise");
+    }
+  }
+
   if (_userId && tab.url.indexOf("https://www.coinexchange.io/") > -1 && changeInfo.status === "complete") {
     console.log("_userId: " + _userId)
     if (tab.url.includes('market/') && tab.url.includes('?')) {
@@ -49,7 +61,6 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       }
     }
 
-
     if (tab.url.includes("noreload")) {
       console.log("login#noreload Açıldı");
 
@@ -70,9 +81,6 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     }
   }
 });
-
-
-
 
 async function LogoutBildir() {
 
@@ -99,17 +107,14 @@ async function LogoutBildir() {
       });
     });
 
-
     chrome.tabs.create({
       active: true,
       url: "https://www.coinexchange.io/login?noreload=true&_userId=" + _userId
     });
   }
-
   //setTimeout(SendSms, 1000 * 60);
   setTimeout(loginSayfasiniAc, 1000 * 90);
   setTimeout(UygulamayiBaslat, 1000 * 60 * 5); // Eğer olduda Ana timerimiz başlamazsa 5 dakika sonra tekrar başlat 
-
 }
 
 $(document).ready(function () {
@@ -129,12 +134,10 @@ $(document).ready(function () {
       LoginCheck();
     })
 
-
     $("#name").keyup(function () {
       _userId = $("#name").val();
       console.log(_userId);
     });
-
   });
 });
 
@@ -174,7 +177,6 @@ async function LoginCheck() {
     _userId = result.data.id;
     if (userName == "musa") {
       // Eğer test ise bütün uygun coinleri gir. DB de olmayanları.
-
     } else {
       Basla();
     }
@@ -228,7 +230,6 @@ function TabKontrol(dbMarkets) {
     TabiDbdekilerdeArat(tabs, dbMarkets);
     DbdekileriTabdaArat(dbMarkets, tabs)
   });
-
 }
 
 function TradeHistoryKapatac() {
@@ -247,9 +248,6 @@ function TradeHistoryKapatac() {
       yeniHistoryAc();
     }
   });
-
-
-
 }
 
 function TabiDbdekilerdeArat(tabs, dbMarkets) {
@@ -348,4 +346,21 @@ function LoadMarketsForHasip() {
 
 function sleep(saniye) {
   return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
+}
+
+
+function executeScripts(tabId, injectDetailsArray) {
+  function createCallback(tabId, injectDetails, innerCallback) {
+    return function () {
+      chrome.tabs.executeScript(tabId, injectDetails, innerCallback);
+    };
+  }
+
+  var callback = null;
+
+  for (var i = injectDetailsArray.length - 1; i >= 0; --i)
+    callback = createCallback(tabId, injectDetailsArray[i], callback);
+
+  if (callback !== null)
+    callback();   // execute outermost function
 }
