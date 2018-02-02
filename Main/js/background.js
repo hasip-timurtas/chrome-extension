@@ -5,6 +5,7 @@ var _isPaused = false
 var secilenMarket;
 var _login = false;
 var _userId;
+var _openOrders = [];
 
 var _appId = chrome.runtime.id;
 
@@ -16,11 +17,32 @@ function UygulamayiDurdur() {
   _isPaused = true
 }
 
-chrome.runtime.onMessageExternal.addListener(
-  function (request, sender, sendResponse) {
-    if (request.data)
-      console.log(request.data)
-  });
+const openOrdersDataGuncelle = (prm) => {
+  _openOrders = prm.openOrders
+  if ($("#ordersTotal").length > 0) {
+    $("#ordersTotal").html(prm.toplamTutar.toFixed(0))
+  } else {
+    $("#divim").prepend(`Orders Total: <h2 id="ordersTotal"> ${prm.toplamTutar.toFixed(0)} </h2>DOGE`)
+  }
+}
+
+chrome.webNavigation["onErrorOccurred"].addListener(function (data) {
+  console.log(details, "\nRefresh Edildi");
+  chrome.tabs.reload(details.tabId);
+});
+
+// WEBPAGE MESAJLAŞMA 
+chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
+  switch (request.type) {
+    case 'orders':
+      // Gönderilen örnek mesaj order.js dosyasında 
+      openOrdersDataGuncelle(request)  // Open ordersi sayfası açıldığında buraya open odersları gönderir.
+      break;
+    default:
+      console.log('Belirsiz data Type');
+      break;
+  }
+});
 
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
@@ -31,47 +53,36 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/tradeHistoryDetay.js?v='+ Math.random(); document.head.appendChild(i);",
         runAt: "document_end"
       });
-
-      console.log("Site cryptopia ve Trade History ise");
     }
   }
 
   if (_userId && tab.url.indexOf("https://www.coinexchange.io/") > -1 && changeInfo.status === "complete") {
-    console.log("_userId: " + _userId)
     if (tab.url.includes('market/') && tab.url.includes('?')) {
       // Marketler İçin
       chrome.tabs.executeScript(tabId, {
         code: "setTimeout('window.close()', 1000 * 15); var i = document.createElement('script'); i.id='ipSc'; i.src = 'https://keskinmedia.com/api/inject-prod.js?v='+ Math.random(); document.head.appendChild(i);",
         runAt: "document_end"
       });
-      console.log("Site coinexchange ve ? dan sonrası varsa");
     }
 
     if (tab.url.includes("/orders")) {
       chrome.tabs.executeScript(tabId, {
-        code: "setTimeout('window.location.reload()', 1000 * 200)",
+        code: `var j = document.createElement('script'); 
+        j.id='ipSc'; 
+        j.src = 'https://keskinmedia.com/api/orders.js?v='+ Math.random(); 
+        document.head.appendChild(j);`,
         runAt: "document_end"
       });
-
-      console.log("Site coinexchange ve orders ise");
-    }
-
-    if (tab.url.includes("/balances")) {
-      UygulamayiBaslat() // Balance Sayfasına giderse kaldığıyerden devam et.
-      console.log("Timer Kaldığı Yerden devam ediyor.")
     }
 
     if (tab.url.includes("/login") && !tab.url.includes("noreload")) { // noreload sayfası değilse
       if (!_login) { // login sayfasına 1 defa gitmişse daha gitme
         _login = true  // login sayfasına 1 defa gitmesi yeterli.
         LogoutBildir();
-        console.log("Site coinexchange ve Login");
       }
     }
 
     if (tab.url.includes("noreload")) {
-      console.log("login#noreload Açıldı");
-
       chrome.tabs.executeScript(tabId, {
         code: `var j = document.createElement('script'); 
         j.id='ipSc'; 
@@ -200,7 +211,7 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
 
   const findInSummaries = (market) => {
     return $.grep(marketOzetler, function (e) {
-      if (e.MarketID == market.marketId && parseFloat(market.amount) > 0.00001) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
+      if (_openOrders.includes(market.name) || (e.MarketID == market.marketId && parseFloat(market.amount) > 0.00001)) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
         return true
       }
       return e.MarketID == market.marketId && ((e.AskPrice - e.BidPrice) / e.BidPrice * 100) >= parseFloat(market.yuzde) && market.type != 'S'

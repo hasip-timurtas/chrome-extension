@@ -89,7 +89,7 @@ async function GetCoinExchangeMarkets() {
   var marketOzetler = resultSum.data.result;
 
   var yuzdeBuyukOlanlar = $.grep(marketOzetler, function (e) {
-    return ((e.AskPrice - e.BidPrice) / e.BidPrice * 100) > 30 && e.Volume > 0.0001 && e.BidPrice > 0.00000004 && e.AskPrice > 0.00000004;
+    return ((e.AskPrice - e.BidPrice) / e.BidPrice * 100) > 10 && e.Volume > 0.0001 && e.BidPrice > 0.00000004 && e.AskPrice > 0.00000004;
   });
 
 

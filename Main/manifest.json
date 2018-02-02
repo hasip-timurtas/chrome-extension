@@ -17,8 +17,7 @@
     "storage",
     "background",
     "webNavigation",
-    "<all_urls>",
-    "storage"
+    "<all_urls>"
   ],
   "background": {
     "page": "background.html"
