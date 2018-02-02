@@ -28,6 +28,11 @@
     "chrome_style": true,
     "open_in_tab": true
   },
+  "externally_connectable": {
+    "matches": [
+      "https://www.coinexchange.io/*"
+    ]
+  },
   "content_scripts": [
     {
       "run_at": "document_end",
@@ -38,6 +43,7 @@
       ],
       "css": [],
       "js": [
+        "js/dll/jquery.js",
         "js/dll/robot.js"
       ]
     }

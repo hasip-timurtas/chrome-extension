@@ -1,29 +1,8 @@
-var secilenMarket;
-var buySirasi;
-var sellSirasi;
-var timerim;
-var sayacTimer;
-var marketOrderBook;
-var activeBuy;
-var activeSell;
+var secilenMarket, buySirasi, sellSirasi, timerim, sayacTimer, marketOrderBook, activeBuy, activeSell;
 var sayfaKapanmaSuresi = 10
 var _sellSirasi = 9 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
 
 function SayfayiTemizle() {
-  console.log("Sayfayi Temizle");
-
-  /*
-  $(".row")[2].remove();
-  $(".row")[2].remove();
-  $(".row")[8].remove();
-  $(".row")[8].remove();
-
-  $(".row")[8].remove();
-  $(".row")[2].remove();
-  $(".row")[4].remove();
-  $(".row")[5].remove();
-  */
-
   $(".col-xs-12")[9].remove();
   $(".bottom-alert-box").remove();
   $(".custom-hr-margin").remove();
@@ -211,7 +190,7 @@ async function OneGecenVarmiKontrol() {
   // Buy varsa ama var olan buy alım satım farkı yüzdemizden küçükse iptal edilsin.
   var alimSatimYuzdeFarki = Math.round((secilenMarket.AskPrice - secilenMarket.BidPrice) / secilenMarket.BidPrice * 100);
 
-  if (data.buySirasi > 1 || alimSatimYuzdeFarki < 10) {
+  if (data.buySirasi > 1) {
     BuyIptalveRefresh()
   }
 

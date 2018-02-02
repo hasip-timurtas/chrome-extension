@@ -6,6 +6,7 @@ var secilenMarket;
 var _login = false;
 var _userId;
 
+var _appId = chrome.runtime.id;
 
 function UygulamayiBaslat() {
   _isPaused = false
@@ -14,6 +15,13 @@ function UygulamayiBaslat() {
 function UygulamayiDurdur() {
   _isPaused = true
 }
+
+chrome.runtime.onMessageExternal.addListener(
+  function (request, sender, sendResponse) {
+    if (request.data)
+      console.log(request.data)
+  });
+
 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   if (tab.url.indexOf("https://www.cryptopia.co.nz/") > -1 && changeInfo.status === "complete") {
@@ -39,13 +47,13 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       console.log("Site coinexchange ve ? dan sonrası varsa");
     }
 
-    if (tab.url.includes("/trades")) {
+    if (tab.url.includes("/orders")) {
       chrome.tabs.executeScript(tabId, {
         code: "setTimeout('window.location.reload()', 1000 * 200)",
         runAt: "document_end"
       });
 
-      console.log("Site coinexchange ve trades ise");
+      console.log("Site coinexchange ve orders ise");
     }
 
     if (tab.url.includes("/balances")) {
@@ -237,12 +245,12 @@ function TradeHistoryKapatac() {
   const yeniHistoryAc = () => {
     chrome.tabs.create({
       active: false,
-      url: 'https://www.coinexchange.io/trades/page/1'
+      url: `https://www.coinexchange.io/orders/page/1?&appId=${_appId}`
     });
   }
 
   chrome.tabs.query({
-    url: "https://www.coinexchange.io/trades/page/*"
+    url: "https://www.coinexchange.io/orders/page/*"
   }, function (tabs) {
     if (tabs.length == 0) {
       yeniHistoryAc();
