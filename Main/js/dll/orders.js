@@ -9,7 +9,7 @@ var appId = new URL(document.URL).searchParams.get("appId");
 $("h3").html(`All Open Orders <br> Total : ${toplamTutar} DOGE`)
 chrome.runtime.sendMessage(appId, { type: "orders", openOrders, toplamTutar });
 
-setTimeout('window.location.reload()', 1000 * 30) // 30 saniye sonra refreshle
+setTimeout('window.location.reload()', 1000 * 15) // 30 saniye sonra refreshle
 
 
 // RESPONSE İLE ÖRNEK MESAJ

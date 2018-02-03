@@ -44,7 +44,6 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
   }
 });
 
-
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   if (tab.url.indexOf("https://www.cryptopia.co.nz/") > -1 && changeInfo.status === "complete") {
     if (tab.url.includes("/TradeHistory")) {
@@ -60,7 +59,6 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         runAt: "document_end"
       });
     }
-
   }
 
   if (tab.url.indexOf("https://www.coinexchange.io/orders") > -1 && changeInfo.status === "complete") {

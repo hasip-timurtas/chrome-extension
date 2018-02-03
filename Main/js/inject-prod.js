@@ -1,5 +1,6 @@
 var secilenMarket, buySirasi, sellSirasi, timerim, sayacTimer, marketOrderBook, activeBuy, activeSell;
 var sayfaKapanmaSuresi = 15
+setTimeout(SayfayiKapat, 1000 * sayfaKapanmaSuresi) // 1 dakika sonra refresh atılacak
 var _sellSirasi = 6 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
 
 function SayfayiTemizle() {
@@ -51,7 +52,6 @@ async function getBests() {
       DbGuncelle();
       SayaciAktifEt(); // Sayacı Aktif Et
       AlimSatimKontrol();
-      setTimeout(SayfayiKapat, 1000 * sayfaKapanmaSuresi) // 1 dakika sonra refresh atılacak
     }
   );
 }

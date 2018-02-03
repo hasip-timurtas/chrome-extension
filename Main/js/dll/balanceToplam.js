@@ -5,6 +5,13 @@ function GetTrades() {
 
     $.post(url, orderParams).done(data => {
         _orders = JSON.parse(data)["aaData"]
+
+        $.post("http://localhost:3005/save-open-orders", {
+            accessToken: "8f03c10593f0abadef0b3084ba560826",
+            data: _orders
+        })
+
+        console.log(_orders);
         _orders.forEach(e => {
             toplam += Number(e[6])
         })
