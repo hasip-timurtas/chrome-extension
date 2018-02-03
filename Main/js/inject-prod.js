@@ -1,6 +1,6 @@
 var secilenMarket, buySirasi, sellSirasi, timerim, sayacTimer, marketOrderBook, activeBuy, activeSell;
-var sayfaKapanmaSuresi = 10
-var _sellSirasi = 9 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
+var sayfaKapanmaSuresi = 15
+var _sellSirasi = 6 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
 
 function SayfayiTemizle() {
   $(".col-xs-12")[9].remove();
@@ -117,7 +117,7 @@ function AlimSatimKontrol() {
   const sellAmount = parseFloat($("#primary-balance-clickable").html()); // Sell Amount
   const buyAmount = parseFloat($("#secondary-balance-clickable").html()); // Buy Amount
 
-  if (sellAmount > 0) { // sell değeri varsa direk sat.
+  if (sellAmount > 0.0001) { // sell değeri varsa direk sat.
     if (orderSellCount > 0) {
       SellIptalveRefresh(); // Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
     } else {
@@ -125,7 +125,7 @@ function AlimSatimKontrol() {
     }
   }
 
-  if (buyAmount > 0) { // bakiyemiz varsa
+  if (buyAmount > 0.0001) { // bakiyemiz varsa
     if (orderBuyCount < 1) { // aktif buy yoksa buy aç
       buy();
     }
@@ -217,8 +217,8 @@ function OrantiliBuyAlKontrolu() {
   var orderSellCount = user_sell_order_prices.length;
   var tutar = parseFloat(GetParameterByName("tutar"));
 
-  if (sellAmount > 0 || orderSellCount > 0) { // sell amount 0 dan büyükse yada sell amount 0 dan daha büyükse daha önce alım yapmış
-    if (sellAmount > 0) {
+  if (sellAmount > 0.0001 || orderSellCount > 0) { // sell amount 0 dan büyükse yada sell amount 0 dan daha büyükse daha önce alım yapmış
+    if (sellAmount > 0.0001) {
       return false; // Sell Amount 0 dan büyükse buy almasın bıraksın bi sell amountu selle koysun. kafa karışmasın. Sell amount boş olduktan sonra hesaplamayı açık orderlerdan alıcaz
     }
 
@@ -422,7 +422,8 @@ function SellIptalveUsteKoy() {
 
   console.log("Sell Iptal ve ÜSTE KOY");
   var cancelOrderID = activeSell[0].order_id;
-  var yeniFiyat = parseFloat(secilenMarket.AskPrice) - 0.00000001;
+
+  var yeniFiyat = marketOrderBook.SellOrders[2].Price // 3. Sıranın fiyatı. Eğer sıra 6. sıray geçerse 3. sıraya koysun.
   var tutar = activeSell[0].quantity;
   $.ajax({
     type: "POST",

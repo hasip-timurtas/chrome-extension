@@ -89,7 +89,7 @@ function FillTable() {
         karRengi = dm.toplamKar > 0 ? "#75cb75" : "#f48484"
         karRengi = dm.toplamKar == 0 ? "white" : karRengi
         tbody += `<tr onclick="MarketRapoGoster('${dm.name}')"> 
-        <td style="color:#feff7f"><a target="_blank" href='/Exchange?market=${dm.name.replace("/", "_")}'>${dm.name}</a</td>
+        <td style="color:#feff7f"><a target="_blank" href='/Exchange?market=${dm.name.replace("/", "_")}'>${dm.name}</a></td>
         <td style="color:#f48484">${dm.toplamBuy}</td>
         <td style="color:#75cb75">${dm.toplamSell}</td> 
         <td style="color:${karRengi}">${dm.toplamKar}</td> 
@@ -187,7 +187,9 @@ const MarketRapoGoster = (marketName) => {
         <td>${m.Time}</td> 
         </tr>`
     });
-    const baslik = `<span style="margin-left: 40%;">${marketName}</span>`
+    const baslik = `<span style="margin-left: 40%;">
+        <a target="_blank" href='/Exchange?market=${marketName.replace("/", "_")}'>${marketName}</a>
+    </span>`
     const geriDonButon = `<button onclick="TumRaporlariGoster()" style="position: absolute; right: 20px; top: 15px; color: #120000; font-size: 18px; width: 147px;"> 
                         Geri Dön     <i class="fa icon-exitalt" style="float: right;"></i></button> `
 

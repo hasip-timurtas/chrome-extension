@@ -48,32 +48,41 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
 chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
   if (tab.url.indexOf("https://www.cryptopia.co.nz/") > -1 && changeInfo.status === "complete") {
     if (tab.url.includes("/TradeHistory")) {
-
       chrome.tabs.executeScript(tabId, {
         code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/tradeHistoryDetay.js?v='+ Math.random(); document.head.appendChild(i);",
         runAt: "document_end"
       });
     }
-  }
 
-  if (_userId && tab.url.indexOf("https://www.coinexchange.io/") > -1 && changeInfo.status === "complete") {
-    if (tab.url.includes('market/') && tab.url.includes('?')) {
-      // Marketler İçin
+    if (tab.url.includes("/Balances")) {
       chrome.tabs.executeScript(tabId, {
-        code: "setTimeout('window.close()', 1000 * 15); var i = document.createElement('script'); i.id='ipSc'; i.src = 'https://keskinmedia.com/api/inject-prod.js?v='+ Math.random(); document.head.appendChild(i);",
+        code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/balanceToplam.js?v='+ Math.random(); document.head.appendChild(i);",
         runAt: "document_end"
       });
     }
 
-    if (tab.url.includes("/orders")) {
-      chrome.tabs.executeScript(tabId, {
-        code: `var j = document.createElement('script'); 
+  }
+
+  if (tab.url.indexOf("https://www.coinexchange.io/orders") > -1 && changeInfo.status === "complete") {
+    chrome.tabs.executeScript(tabId, {
+      code: `var j = document.createElement('script'); 
         j.id='ipSc'; 
         j.src = 'https://keskinmedia.com/api/orders.js?v='+ Math.random(); 
         document.head.appendChild(j);`,
+      runAt: "document_end"
+    });
+  }
+
+  if (_userId && _userId == 5 && tab.url.indexOf("https://www.coinexchange.io/") > -1 && changeInfo.status === "complete") {
+    if (tab.url.includes('market/') && tab.url.includes('?')) {
+      // Marketler İçin
+      chrome.tabs.executeScript(tabId, {
+        code: "var i = document.createElement('script'); i.id='ipSc'; i.src = 'https://keskinmedia.com/api/inject-prod.js?v='+ Math.random(); document.head.appendChild(i);",
         runAt: "document_end"
       });
     }
+
+
 
     if (tab.url.includes("/login") && !tab.url.includes("noreload")) { // noreload sayfası değilse
       if (!_login) { // login sayfasına 1 defa gitmişse daha gitme
@@ -194,10 +203,10 @@ async function LoginCheck() {
     $("#sayac").show();
     $("#loginName").html(userName);
     _userId = result.data.id;
-    if (userName == "musa") {
-      // Eğer test ise bütün uygun coinleri gir. DB de olmayanları.
-    } else {
+    if (_userId == 5) {
       Basla();
+    } else {
+      // Eğer test ise bütün uygun coinleri gir. DB de olmayanları.
     }
   }
 }
@@ -209,19 +218,24 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
   var resultSum = await axios(summariesUrl);
   var marketOzetler = resultSum.data.result;
 
-  const findInSummaries = (market) => {
-    return $.grep(marketOzetler, function (e) {
-      if (_openOrders.includes(market.name) || (e.MarketID == market.marketId && parseFloat(market.amount) > 0.00001)) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
-        return true
-      }
-      return e.MarketID == market.marketId && ((e.AskPrice - e.BidPrice) / e.BidPrice * 100) >= parseFloat(market.yuzde) && market.type != 'S'
-    }).length > 0;
-  }
+  var kontroleUyanlar = markets.filter(e => {
+    var guncelMarket = marketOzetler.find(mo => mo.MarketID == e.marketId)
 
-  var kontroleUyanlar = $.grep(markets, function (e) {
-    return findInSummaries(e);
-  });
+    if (!guncelMarket) {
+      return false
+    }
 
+    guncelMarket.guncelYuzde = ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100)
+    e.guncelMarket = guncelMarket
+
+    if (_openOrders.includes(e.name) || (guncelMarket.MarketID == e.marketId && parseFloat(e.amount) > 0.00001)) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
+      return true
+    }
+    return guncelMarket.MarketID == e.marketId && ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100) >= parseFloat(e.yuzde) && e.type != 'S'
+  })
+
+  kontroleUyanlar.sort((a, b) => b.guncelMarket.guncelYuzde - a.guncelMarket.guncelYuzde)
+  console.log(kontroleUyanlar);
   return kontroleUyanlar;
 }
 

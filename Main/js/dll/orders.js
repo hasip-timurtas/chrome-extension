@@ -6,7 +6,7 @@ for (i = 1; i < orders.length; i++) {
 }
 
 var appId = new URL(document.URL).searchParams.get("appId");
-
+$("h3").html(`All Open Orders <br> Total : ${toplamTutar} DOGE`)
 chrome.runtime.sendMessage(appId, { type: "orders", openOrders, toplamTutar });
 
 setTimeout('window.location.reload()', 1000 * 30) // 30 saniye sonra refreshle
