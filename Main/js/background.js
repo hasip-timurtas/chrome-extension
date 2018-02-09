@@ -1,5 +1,5 @@
 var _access_token = "8f03c10593f0abadef0b3084ba560826";
-var _sayacSuresi = 15;
+var _sayacSuresi = 20;
 var _isPaused = false
 
 var secilenMarket;

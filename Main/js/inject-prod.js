@@ -1,5 +1,5 @@
 var secilenMarket, buySirasi, sellSirasi, timerim, sayacTimer, marketOrderBook, activeBuy, activeSell;
-var sayfaKapanmaSuresi = 15
+var sayfaKapanmaSuresi = 20
 setTimeout(SayfayiKapat, 1000 * sayfaKapanmaSuresi) // 1 dakika sonra refresh atılacak
 var _sellSirasi = 6 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
 
@@ -41,7 +41,7 @@ function paneliEkle() {
 
 async function getBests() {
 
-  SayfayiTemizle();
+  //SayfayiTemizle();
   LoadViews();
 
   $.get(
@@ -125,7 +125,9 @@ function AlimSatimKontrol() {
     }
   }
 
-  if (buyAmount > 0.0001) { // bakiyemiz varsa
+  var tutar = Number(GetParameterByName("tutar"))
+
+  if (buyAmount >= tutar) { // bakiyemiz varsa
     if (orderBuyCount < 1) { // aktif buy yoksa buy aç
       buy();
     }
@@ -415,7 +417,7 @@ function SellIptalveRefresh() {
   });
 }
 
-function SellIptalveUsteKoy() {
+async function SellIptalveUsteKoy() {
   if (activeSell.length == 0) {
     return;
   }
@@ -425,6 +427,12 @@ function SellIptalveUsteKoy() {
 
   var yeniFiyat = marketOrderBook.SellOrders[2].Price // 3. Sıranın fiyatı. Eğer sıra 6. sıray geçerse 3. sıraya koysun.
   var tutar = activeSell[0].quantity;
+
+  $("#spnDurum").html(`Sel Bozulup Üste Alınacak:
+  Yeni Fiyat: ${yeniFiyat}
+  Tutar: ${tutar}
+  `);
+
   $.ajax({
     type: "POST",
     url: Routing.generate('deleteorder'),
@@ -432,14 +440,22 @@ function SellIptalveUsteKoy() {
     dataType: 'json',
     timeout: 5000,
     success: function (data, status) {
-      orderType = '0';
-      yeniFiyat = yeniFiyat.toFixed(8);
-      $("#sell-form #inputPrice").val(yeniFiyat);
-      $("#sell-form #inputAmount").val(tutar);
-      InputPriceKeyUpSell();
-      confirmOrderSubmitCore();
+      // Nothing
     }
   });
+
+
+  await sleep(5);
+
+  orderType = '0';
+  //yeniFiyat = yeniFiyat.toFixed(8);
+  $("#sell-form #inputPrice").val(yeniFiyat);
+  $("#sell-form #inputAmount").val(tutar);
+  InputPriceKeyUpSell();
+  confirmOrderSubmitCore();
+
+
+
 }
 
 
@@ -541,6 +557,9 @@ function AlimveSatimUyumluMu() { // BU FONKSİYON ÇAĞIRILMIYOR.
 
 }
 
+function sleep(saniye) {
+  return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
+}
 
 /*
 UserMarketOrdersViewModel()
