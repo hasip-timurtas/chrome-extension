@@ -108,6 +108,15 @@ var toplam = toplamTutar + balancem
 async function LogoutBildir() {
 
   UygulamayiDurdur()
+
+  chrome.tabs.query({
+    url: "https://www.coinexchange.io/market/*/*?*"
+  }, function (tabs) {
+    tabs.forEach(function (tab) {
+      chrome.tabs.remove(tab.id);
+    });
+  });
+
   // SEND SMS ŞUANLIK DEAKTİF!
   const SendSms = async () => {
     //  http://keskinmedia.com/apim/sendlogout/2/8f03c10593f0abadef0b3084ba560826
