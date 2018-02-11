@@ -1,11 +1,12 @@
 var _access_token = "8f03c10593f0abadef0b3084ba560826";
-var _sayacSuresi = 20;
+var _sayacSuresi = 30;
 var _isPaused = false
 
 var secilenMarket;
 var _login = false;
 var _userId;
 var _openOrders = [];
+var _toplamTutar = 0
 
 var _appId = chrome.runtime.id;
 
@@ -17,35 +18,8 @@ function UygulamayiDurdur() {
   _isPaused = true
 }
 
-const openOrdersDataGuncelle = (prm) => {
-  _openOrders = prm.openOrders
-  if ($("#ordersTotal").length > 0) {
-    $("#ordersTotal").html(prm.toplamTutar.toFixed(0))
-  } else {
-    $("#divim").prepend(`Orders Total: <h2 id="ordersTotal"> ${prm.toplamTutar.toFixed(0)} </h2>DOGE`)
-  }
-}
-
-chrome.webNavigation["onErrorOccurred"].addListener(function (data) {
-  console.log(details, "\nRefresh Edildi");
-  chrome.tabs.reload(details.tabId);
-});
-
-// WEBPAGE MESAJLAŞMA 
-chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
-  switch (request.type) {
-    case 'orders':
-      // Gönderilen örnek mesaj order.js dosyasında 
-      openOrdersDataGuncelle(request)  // Open ordersi sayfası açıldığında buraya open odersları gönderir.
-      break;
-    default:
-      console.log('Belirsiz data Type');
-      break;
-  }
-});
-
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  if (tab.url.indexOf("https://www.cryptopia.co.nz/") > -1 && changeInfo.status === "complete") {
+chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+  if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete") {
     if (tab.url.includes("/TradeHistory")) {
       chrome.tabs.executeScript(tabId, {
         code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/tradeHistoryDetay.js?v='+ Math.random(); document.head.appendChild(i);",
@@ -61,19 +35,42 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     }
   }
 
-  if (tab.url.indexOf("https://www.coinexchange.io/orders") > -1 && changeInfo.status === "complete") {
-    chrome.tabs.executeScript(tabId, {
-      code: `var j = document.createElement('script'); 
-        j.id='ipSc'; 
-        j.src = 'https://keskinmedia.com/api/orders.js?v='+ Math.random(); 
-        document.head.appendChild(j);`,
-      runAt: "document_end"
-    });
+  if (tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
+
+    if (tab.url.includes("/orders")) {
+      if (!tab.url.includes("appId")) {
+        chrome.tabs.update(tab.id, { url: "https://www.coinexchange.io/orders/page/1?appId=" + _appId })
+      }
+
+      chrome.tabs.executeScript(tabId, {
+        code: "var i = document.createElement('script'); i.src='https://keskinmedia.com/api/orders.js?v='+ Math.random(); document.head.appendChild(i);",
+        runAt: "document_end"
+      });
+    }
+
+    if (tab.url.includes("/balances")) {
+      await TradeHistoryKapatac()
+      await sleep(2)
+      chrome.tabs.executeScript(tabId, {
+        code: `var toplamTutar = ${_toplamTutar};
+var balancem = Number($("td:contains('Dogecoin')")[0].parentElement.children[2].innerText);
+var aciklama = $("h3:contains('Account Balances:')").html();
+var toplam = toplamTutar + balancem
+        $("h3:contains('Account Balances:')").html(aciklama + "<br> balance: " + balancem + "<br>order tutar: " + toplamTutar+"<br> Toplam: "+toplam)`,
+        runAt: "document_end"
+      });
+    }
+
   }
 
-  if (_userId && _userId == 5 && tab.url.indexOf("https://www.coinexchange.io/") > -1 && changeInfo.status === "complete") {
-    if (tab.url.includes('market/') && tab.url.includes('?')) {
+  if (_userId && _userId == 5 && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
+    if (tab.url.includes('market/') && tab.url.includes('?tutar')) {
       // Marketler İçin
+      chrome.tabs.executeScript(tabId, {
+        code: "document.documentElement.style.display='none';",
+        runAt: "document_start"
+      });
+
       chrome.tabs.executeScript(tabId, {
         code: "var i = document.createElement('script'); i.id='ipSc'; i.src = 'https://keskinmedia.com/api/inject-prod.js?v='+ Math.random(); document.head.appendChild(i);",
         runAt: "document_end"
@@ -226,19 +223,22 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
     guncelMarket.guncelYuzde = ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100)
     e.guncelMarket = guncelMarket
 
-    if (_openOrders.includes(e.name) || (guncelMarket.MarketID == e.marketId && parseFloat(e.amount) > 0.00001)) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
-      return true
-    }
-    return guncelMarket.MarketID == e.marketId && ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100) >= parseFloat(e.yuzde) && e.type != 'S'
+    /*
+        if (_openOrders.includes(e.name) || (guncelMarket.MarketID == e.marketId && parseFloat(e.amount) > 0.00001)) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
+          return true
+        }
+    */
+    return guncelMarket.MarketID == e.marketId
+    //&& ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100) >= parseFloat(e.yuzde) && e.type != 'S'
   })
 
   kontroleUyanlar.sort((a, b) => b.guncelMarket.guncelYuzde - a.guncelMarket.guncelYuzde)
-  console.log(kontroleUyanlar);
   return kontroleUyanlar;
 }
 
 async function GetMarkets() {
   if (!_isPaused) {// pause edilmemişse gir
+    ButunSayfalariYenile()
     var apiUrl = "http://keskinmedia.com/apim/markets/" + _userId; // kullanıcının marketlerini getirir.
     var result = await axios(apiUrl);
     // {"id":"1","userId":"1","name":"MAXI\/DOGE","tutar":"47527.25465058","type":"S","status":"A","reg_date":"2017-12-25 04:18:19"}
@@ -252,9 +252,27 @@ async function GetMarkets() {
   }
 }
 
-function TabKontrol(dbMarkets) {
+
+function ButunSayfalariYenile() {
+  chrome.tabs.query({
+    url: "https://www.coinexchange.io/market/*/*?*"
+  }, function (tabs) {
+    SayfalariYenile(tabs)
+  });
+}
+
+async function SayfalariYenile(tabs) {
+  for (const tab of tabs) {
+    await sleep(1) // 1 ila 20 saniye arasında bekler 
+    chrome.tabs.reload(tab.id);
+  }
+}
+
+
+async function TabKontrol(dbMarkets) {
   // https://www.coinexchange.io/market/SHND/DOGE?tutar=12345&type=S&yuzde=20
   TradeHistoryKapatac();
+  await sleep(8)
   chrome.tabs.query({
     url: "https://www.coinexchange.io/market/*/*?*"
   }, function (tabs) {
@@ -264,7 +282,6 @@ function TabKontrol(dbMarkets) {
 }
 
 function TradeHistoryKapatac() {
-
   const yeniHistoryAc = () => {
     chrome.tabs.create({
       active: false,
@@ -275,16 +292,16 @@ function TradeHistoryKapatac() {
   chrome.tabs.query({
     url: "https://www.coinexchange.io/orders/page/*"
   }, function (tabs) {
-    if (tabs.length == 0) {
-      yeniHistoryAc();
+    for (const tab of tabs) {
+      chrome.tabs.remove(tab.id);
     }
+    yeniHistoryAc();
   });
 }
 
-function TabiDbdekilerdeArat(tabs, dbMarkets) {
+async function TabiDbdekilerdeArat(tabs, dbMarkets) {
 
-  tabs.forEach(function (tab) {
-
+  for (const tab of tabs) {
     var tabMarket = GetMarketInfoFromUrl(tab.url);
     // tabın dbdekiler içinde ismi ile aranması
     var markets = $.grep(dbMarkets, function (e) {
@@ -299,14 +316,15 @@ function TabiDbdekilerdeArat(tabs, dbMarkets) {
     } else if (market.tutar != tabMarket.tutar || market.type != tabMarket.type || market.yuzde != tabMarket.yuzde) {
       // markette güncelleme var tabı kapat tekrardan aç.
       chrome.tabs.remove(tab.id);
+      await sleep(0.5)
       CreateMarketTab(market);
     }
-  });
+  }
 }
 
 
-function DbdekileriTabdaArat(dbMarkets, tabs) {
-  dbMarkets.forEach(function (dbMarket) {
+async function DbdekileriTabdaArat(dbMarkets, tabs) {
+  for (const dbMarket of dbMarkets) {
     // dbdeki Marketin tablar içinde aranması
     var tabMarkets = $.grep(tabs, function (e) {
       var tabMarket = GetMarketInfoFromUrl(e.url);
@@ -314,18 +332,17 @@ function DbdekileriTabdaArat(dbMarkets, tabs) {
     });
 
     if (tabMarkets.length == 0) {
+      await sleep(0.5)
       CreateMarketTab(dbMarket);
     }
+  }
 
-  });
 }
 
 
 async function CreateMarketTab(market) {
-  var randomSaniye = Math.floor(Math.random() * _sayacSuresi - 10) + 1;
   // Yeni tab açmadan önce 1 ile 10 saniye arası bekler. Bunun amacı 10 tane kayıt varsa aynı anda açmaması için.
   //  aynı anda açarsa bütün işlemler aynı anda yapılır. buda botu belli eder.
-  // await sleep(randomSaniye);
   chrome.tabs.create({
     active: false,
     url: `https://www.coinexchange.io/market/${market.name}?tutar=${market.tutar}&type=${market.type}&yuzde=${market.yuzde}&userId=${_userId}&marketId=${market.id}&zararinaSat=${market.zararinaSat}`
@@ -356,29 +373,9 @@ function GetParameterByName(name, url) {
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-function LoadMarketsForHasip() {
-  /*
-  marketler = [{
-      name: "name",
-      tutar = 1234,
-      type = 'SB',
-      yuzde = 10
-    },
-    {
-      name: "name",
-      tutar = 1234,
-      type = 'SB',
-      yuzde = 10
-    },
-  ]
-  */
-  return marketler;
-}
-
 function sleep(saniye) {
   return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
 }
-
 
 function executeScripts(tabId, injectDetailsArray) {
   function createCallback(tabId, injectDetails, innerCallback) {
@@ -395,3 +392,48 @@ function executeScripts(tabId, injectDetailsArray) {
   if (callback !== null)
     callback();   // execute outermost function
 }
+
+const openOrdersDataGuncelle = (prm) => {
+  console.log(prm);
+  _openOrders = prm.openOrders
+  _toplamTutar = prm.toplamTutar
+  if ($("#ordersTotal").length > 0) {
+    $("#ordersTotal").html(prm.toplamTutar.toFixed(0))
+  } else {
+    $("#divim").prepend(`Orders Total: <h2 id="ordersTotal"> ${prm.toplamTutar.toFixed(0)} </h2>DOGE`)
+  }
+}
+
+// WEBPAGE MESAJLAŞMA 
+chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
+  console.log(request, sender);
+  switch (request.type) {
+    case 'orders':
+      // Gönderilen örnek mesaj order.js dosyasında 
+      openOrdersDataGuncelle(request)  // Open ordersi sayfası açıldığında buraya open odersları gönderir.
+      break;
+    default:
+      console.log('Belirsiz data Type');
+      break;
+  }
+});
+
+
+function GetFunctionBodyCode(fnc) {
+  const fncSt = fnc.toString()
+
+  const functionBody = fncSt.slice(fncSt.indexOf("{") + 1, fncSt.lastIndexOf("}"));
+
+  return functionBody
+}
+
+
+  // RESPONSE İLE ÖRNEK MESAJ
+
+  /*
+  chrome.runtime.sendMessage(appId, { type: "orders", openOrders, toplamTutar }, response => {
+      if (response) {
+          console.log(response)
+      }
+  });
+  */

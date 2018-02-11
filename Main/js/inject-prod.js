@@ -1,17 +1,10 @@
 var secilenMarket, buySirasi, sellSirasi, timerim, sayacTimer, marketOrderBook, activeBuy, activeSell;
-var sayfaKapanmaSuresi = 20
+var sayfaKapanmaSuresi = 20 // bu Sayfa Refresh süresi oldu.
 setTimeout(SayfayiKapat, 1000 * sayfaKapanmaSuresi) // 1 dakika sonra refresh atılacak
-var _sellSirasi = 6 // Sell Sirasi 5 Den büyükse 6 veya üstüyse selii bozar öne alır.
+var _sellSirasi = 8 // Sell Sirasi 8 Den büyükse 9 veya üstüyse selii bozar öne alır.
 
 function SayfayiTemizle() {
-  $(".col-xs-12")[9].remove();
-  $(".bottom-alert-box").remove();
-  $(".custom-hr-margin").remove();
-  $(".float-message").remove();
-
-  $(".trade-table").remove();
-  $("#chart-container").remove();
-  $("link").remove();
+  $("html").css("display", "none")
 }
 
 function LoadViews() {
@@ -57,7 +50,8 @@ async function getBests() {
 }
 
 function SayfayiKapat() {
-  window.close()
+  //window.close()
+  //window.location.reload()
 }
 
 function SayaciAktifEt() {
