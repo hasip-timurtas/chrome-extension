@@ -1,7 +1,7 @@
 var secilenMarket, buySirasi, sellSirasi, timerim, sayacTimer, marketOrderBook, activeBuy, activeSell;
 var sayfaKapanmaSuresi = 20 // bu Sayfa Refresh süresi oldu.
 setTimeout(SayfayiKapat, 1000 * sayfaKapanmaSuresi) // 1 dakika sonra refresh atılacak
-var _sellSirasi = 8 // Sell Sirasi 8 Den büyükse 9 veya üstüyse selii bozar öne alır.
+var _sellSirasi = 35 // Sell Sirasi 8 Den büyükse 9 veya üstüyse selii bozar öne alır.
 
 function SayfayiTemizle() {
   $("html").css("display", "none")
@@ -419,7 +419,7 @@ async function SellIptalveUsteKoy() {
   console.log("Sell Iptal ve ÜSTE KOY");
   var cancelOrderID = activeSell[0].order_id;
 
-  var yeniFiyat = marketOrderBook.SellOrders[2].Price // 3. Sıranın fiyatı. Eğer sıra 6. sıray geçerse 3. sıraya koysun.
+  var yeniFiyat = marketOrderBook.SellOrders[10].Price // 3. Sıranın fiyatı. Eğer sıra 6. sıray geçerse 3. sıraya koysun.
   var tutar = activeSell[0].quantity;
 
   $("#spnDurum").html(`Sel Bozulup Üste Alınacak:
