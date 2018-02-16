@@ -21,8 +21,11 @@ function Login() {
     //setTimeout('$("#_submit").click();', 1000 * 5);// 5 saniye sonra login butonuna bas 
 }
 
-setTimeout(fillAndSubmit, 1000 * 1) // sayfa yüklendikten 1 sayine sonra formu doldur.
-
+if ($("a:contains('My Account')").length == 0) { // Eğer zaten login olmamışsa
+    setTimeout(fillAndSubmit, 1000 * 1) // sayfa yüklendikten 1 sayine sonra formu doldur.
+} else {
+    window.close()
+}
 
 
 
