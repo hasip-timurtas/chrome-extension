@@ -36,7 +36,29 @@ async function getBests() {
 
   //SayfayiTemizle();
   LoadViews();
+  var appId = new URL(document.URL).searchParams.get("appId");
+  var marketId = $("#buy-form #market_id").val()
+  chrome.runtime.sendMessage(appId, { type: "secilen-market", marketId }, response => {
+    if (response) {
+      secilenMarket = response
+      paneliEkle();
+      DbGuncelle();
+      SayaciAktifEt(); // Sayacı Aktif Et
+      AlimSatimKontrol();
+    }
+  });
 
+  /*
+  $.get("/api/v1/getmarketsummary?market_id=" + $("#buy-form #market_id").val()).done(data => {
+    secilenMarket = data.result;
+    paneliEkle();
+    DbGuncelle();
+    SayaciAktifEt(); // Sayacı Aktif Et
+    AlimSatimKontrol();
+  })
+*/
+
+  /*
   $.get(
     "/api/v1/getmarketsummary?market_id=" + $("#buy-form #market_id").val(),
     function (data) {
@@ -47,6 +69,8 @@ async function getBests() {
       AlimSatimKontrol();
     }
   );
+
+  */
 }
 
 function SayfayiKapat() {
