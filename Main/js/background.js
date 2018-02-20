@@ -21,6 +21,14 @@ function UygulamayiDurdur() {
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete") {
+
+    if (tab.url.includes("/Exchange?market=")) {
+      chrome.tabs.executeScript(tabId, {
+        code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/cryMarket.js?v='+ Math.random(); document.head.appendChild(i);`,
+        runAt: "document_end"
+      });
+    }
+
     if (tab.url.includes("/TradeHistory")) {
       chrome.tabs.executeScript(tabId, {
         code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/tradeHistoryDetay.js?v='+ Math.random(); document.head.appendChild(i);",
@@ -64,7 +72,7 @@ var toplam = toplamTutar + balancem
 
   }
 
-  if (tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
+  if (_userId && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
     if (tab.url.includes('market/') && tab.url.includes('?tutar')) {
       // Marketler İçin
       chrome.tabs.executeScript(tabId, {
