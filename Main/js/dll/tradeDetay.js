@@ -4,7 +4,9 @@ function GetTradeHistory() {
     const url = "https://www.cryptopia.co.nz/UserExchange/GetTradeHistory"
 
     $.post(url, tradeHistoryParams).done(data => {
-        ProcessTradeHistory(data)
+        var result = JSON.parse(data);
+        result = result["aaData"];
+        ProcessTradeHistory(result)
     });
 }
 
@@ -12,8 +14,7 @@ var _markets;
 let _html
 var duzenliMarketler
 function ProcessTradeHistory(result) {
-    var result = JSON.parse(result);
-    result = result["aaData"];
+    console.log(result);
     var markets = new Set();
     result.forEach((o) => markets.add(o[1]))
     _markets = markets

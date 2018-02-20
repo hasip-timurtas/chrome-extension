@@ -153,13 +153,17 @@ async function LogoutBildir() {
 $(document).ready(function () {
   $("body").load('https://keskinmedia.com/api/background.php', function (data) {
     var user = window.location.search.split('?')[1];
-    if (user == "k") {
+    if (user == "-k") {
       $("#name").val("kari");
       $("#pass").val("12345");
       LoginCheck();
     } else if (user == "h") {
       $("#name").val("hasip");
       $("#pass").val("123456");
+      LoginCheck();
+    } else if (user == "m") {
+      $("#name").val("musa");
+      $("#pass").val("12345678");
       LoginCheck();
     }
 
@@ -231,7 +235,7 @@ async function LoginCheck() {
     $("#sayac").show();
     $("#loginName").html(userName);
     _userId = result.data.id;
-    if (_userId == 5) {
+    if (_userId == 5 || _userId == 2) {
       Basla();
     } else {
       // Eğer test ise bütün uygun coinleri gir. DB de olmayanları.

@@ -9,6 +9,10 @@ const fillAndSubmit = () => {
         $("#username").val("hasip4442");
         $("#password").val("hasip3434+");
         Login()
+    } else if (_userId == 3) {
+        $("#username").val("hasip4442");
+        $("#password").val("hasip3434+");
+        Login()
     } else {
         $("#username").val("BOŞ");
         $("#password").val("");

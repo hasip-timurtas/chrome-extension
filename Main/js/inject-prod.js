@@ -320,7 +320,6 @@ function buy() {
 function sell() {
   console.log("sell");
   var tutar = $("#primary-balance-clickable").html() //
-  var yuzde = GetParameterByName("yuzde");
   var type = GetParameterByName("type");
 
   if (type == "B") {
@@ -352,6 +351,7 @@ function sell() {
 
 function BuyFarkKontrolSellIcin() {
   console.log("BuyFarkKontrolSellIcin");
+  var yuzde = GetParameterByName("yuzde");
   // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
   var satacagiFiyat = parseFloat(secilenMarket.AskPrice) - 0.00000001;
   var zararinaSat = GetParameterByName("zararinaSat");
@@ -381,7 +381,7 @@ function BuyFarkKontrolSellIcin() {
   var alimSatimYuzdeFarki = ((satacagiFiyat - aldigiFiyat) / aldigiFiyat * 100);
   var result = {};
 
-  if (alimSatimYuzdeFarki >= 10) {
+  if (alimSatimYuzdeFarki >= Number(yuzde) / 3 * 2) {
     result = {
       yuzde10Fark: true
     }
