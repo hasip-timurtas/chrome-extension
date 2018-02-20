@@ -64,12 +64,19 @@ var toplam = toplamTutar + balancem
 
   }
 
-  if (_userId && _userId == 5 && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
+  if (tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
     if (tab.url.includes('market/') && tab.url.includes('?tutar')) {
       // Marketler İçin
       chrome.tabs.executeScript(tabId, {
         code: "document.documentElement.style.display='none';",
         runAt: "document_start"
+      });
+
+      var marketId=GetParameterByName("marketId",tab.url)
+      var guncelMarket = _marketOzetler.find(mo => mo.MarketID == Number(marketId))
+      chrome.tabs.executeScript(tabId, {
+        code: `var datam = '${JSON.stringify(guncelMarket)}'; $("body").attr("datam",datam);`,
+        runAt: "document_end"
       });
 
       chrome.tabs.executeScript(tabId, {
@@ -381,8 +388,8 @@ async function CreateMarketTab(market) {
   //  aynı anda açarsa bütün işlemler aynı anda yapılır. buda botu belli eder.
   chrome.tabs.create({
     active: false,
-    url: `https://www.coinexchange.io/market/${market.name}?tutar=${market.tutar}&type=${market.type}&yuzde=${market.yuzde}&userId=${_userId}&marketId=${market.id}&zararinaSat=${market.zararinaSat}&appId=${_appId}`
-  });
+    url: `https://www.coinexchange.io/market/${market.name}?tutar=${market.tutar}&type=${market.type}&yuzde=${market.yuzde}&userId=${_userId}&marketId=${market.marketId}&zararinaSat=${market.zararinaSat}&appId=${_appId}`
+  })
 }
 
 function GetMarketInfoFromUrl(url) {
@@ -441,6 +448,8 @@ const openOrdersDataGuncelle = (prm) => {
 
 // WEBPAGE MESAJLAŞMA 
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
+  
+  
   switch (request.type) {
     case 'orders':
       // Gönderilen örnek mesaj order.js dosyasında 
@@ -454,7 +463,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
       console.log('Belirsiz data Type');
       break;
   }
-});
+}); 
 
 // RESPONSE İLE ÖRNEK MESAJ
 
