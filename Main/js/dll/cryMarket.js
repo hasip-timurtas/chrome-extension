@@ -35,21 +35,35 @@ async function Basla (){
     await sleep(2)
     var buyPrice = Number(_TradePairInfo.Buys[0][1])
     var sellPrice = Number(_TradePairInfo.Sells[0][1])
-    var openSellPrice = Number(_TradePairUserData.Open.find(e=> e[1]=="Sell")[2])
-    var lastBuyPrice = Number(_TradePairUserData.History.find(e=> e[1]=="Buy")[2])
-    var guncelYuzde = (sellPrice - buyPrice) / buyPrice * 100
-    var bizimSellLastBuyFarki = (openSellPrice - lastBuyPrice) / lastBuyPrice * 100
-    var guncelSellBuyFarki = (sellPrice - lastBuyPrice) / lastBuyPrice * 100
-    var bizimSellOnceGecerseFark = ((sellPrice - 0.00000001) - lastBuyPrice) / lastBuyPrice * 100
-    var sonuc = {
-      "Güncel Yüzde ": Number(guncelYuzde.toFixed(8)),
-      "Bizim Sell ve Last Buy Farkı": Number(bizimSellLastBuyFarki.toFixed(8)),
-      "Güncel Sell ve Last Buy Farkı": Number(guncelSellBuyFarki.toFixed(8)),
-      "Bizim Sell En Önce Geçerse Last Buy Farkı": Number(bizimSellOnceGecerseFark.toFixed(8))
+    var openSellPrice = _TradePairUserData.Open.length>0 && Number(_TradePairUserData.Open.find(e=> e[1]=="Sell")[2])
+    var lastBuyPrice = _TradePairUserData.History.length>0 && Number(_TradePairUserData.History.find(e=> e[1]=="Buy")[2])
+    var all ={
+        guncelYuzde : Number(((sellPrice - buyPrice) / buyPrice * 100).toFixed(8)),
+        bizimSellLastBuyFarki : Number(((openSellPrice - lastBuyPrice) / lastBuyPrice * 100).toFixed(8)),
+        guncelSellBuyFarki : Number(((sellPrice - lastBuyPrice) / lastBuyPrice * 100).toFixed(8)),
+        bizimSellOnceGecerseFark : Number((((sellPrice - 0.00000001) - lastBuyPrice) / lastBuyPrice * 100).toFixed(8))
     }
+
+    var sonuc = {
+      "Güncel Yüzde ": all.guncelYuzde,
+      "Bizim Sell ve Last Buy Farkı": all.bizimSellLastBuyFarki,
+      "Güncel Sell ve Last Buy Farkı": Number(all.guncelSellBuyFarki.toFixed(8)),
+      "Bizim Sell En Önce Geçerse Last Buy Farkı": Number(all.bizimSellOnceGecerseFark.toFixed(8))
+    }
+    paneliEkle(all)
     console.table(sonuc)
 }
 
+function paneliEkle(all) {
+    $("body").append(`
+        <div id='divim' style='padding:10px; width:385px; height:100px; background-color:#8fcaab; color:black; position:fixed; bottom:0; z-index:999;'>
+            Güncel Yüzde: <strong style="float:right"> ${all.guncelYuzde} </strong> <br>
+            Bizim Sell ve Last Buy Farkı: <strong style="float:right">  ${all.bizimSellLastBuyFarki}</strong> <br>
+            Güncel Sell ve Last Buy Farkı: <strong style="float:right"> ${all.guncelSellBuyFarki}</strong> <br>
+            Bizim Sell En Önce Geçerse LBF: <strong style="float:right">  ${all.bizimSellOnceGecerseFark}</strong> <br>
+        </div>
+        `);
+  }
 
 function sleep(saniye) {
   return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
