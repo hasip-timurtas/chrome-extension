@@ -232,7 +232,7 @@ function Basla() {
   GetMarkets(); // With UserName
   SayaciAktifEt();
   HataliSayfaKontrolSayaci();
-  setInterval(GetMarkets, 1000 * _sayacSuresi);
+  setInterval(GetMarkets, 1000 * _sayacSuresi); 
 }
 
 async function LoginCheck() {
@@ -250,7 +250,7 @@ async function LoginCheck() {
     $("#sayac").show();
     $("#loginName").html(userName);
     _userId = result.data.id;
-    if (_userId == 5 || _userId == 2) {
+    if (_userId) {
       Basla();
     } else {
       // Eğer test ise bütün uygun coinleri gir. DB de olmayanları.
