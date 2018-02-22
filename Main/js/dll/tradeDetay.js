@@ -90,22 +90,22 @@ function FillTable() {
         karRengi = dm.toplamKar > 0 ? "#75cb75" : "#f48484"
         karRengi = dm.toplamKar == 0 ? "white" : karRengi
         tbody += `<tr onclick="MarketRapoGoster('${dm.name}')"> 
-        <td style="color:#feff7f"><a target="_blank" href='/Exchange?market=${dm.name.replace("/", "_")}'>${dm.name}</a></td>
-        <td style="color:#f48484">${dm.toplamBuy}</td>
-        <td style="color:#75cb75">${dm.toplamSell}</td> 
-        <td style="color:${karRengi}">${dm.kalanAmount > 0 ? 0 : dm.toplamKar}</td> 
-        <td style="color:#f48484">${dm.kalanAmount}</td>
-        </tr>`
+                    <td style="color:#feff7f"><a target="_blank" href='/Exchange?market=${dm.name.replace("/", "_")}'>${dm.name}</a></td>
+                    <td style="color:#f48484">${dm.toplamBuy}</td>
+                    <td style="color:#75cb75">${dm.toplamSell}</td> 
+                    <td style="color:${karRengi}">${dm.kalanAmount > 0 ? 0 : dm.toplamKar}</td> 
+                    <td style="color:#f48484">${dm.kalanAmount}</td>
+                </tr>`
     });
 
     _html = `<table id="sonuclarTH" class="table table-striped table-hover table-condensed" style="font-size:15px; font-family:arial; width: 100%;">
-    <thead>
-    <tr><th>Market</th><th>Toplam Buy</th><th>Toplam Sell</th><th class="sumKar">Toplam Kar</th><th style="width:100px">Kalan</tr></thead>
-    <tbody>
-    ${tbody}
-    </tbody>
-    <tfoot id="toplamlar"></tfoot>
-    </table>`;
+                <thead>
+                    <tr><th>Market</th><th>Toplam Buy</th><th>Toplam Sell</th><th class="sumKar">Toplam Kar</th><th style="width:100px">Kalan</tr></thead>
+                <tbody>
+                    ${tbody}
+                </tbody>
+                <tfoot id="toplamlar"></tfoot>
+            </table>`;
 
     const btns = `
     <li>
@@ -180,13 +180,13 @@ const MarketRapoGoster = (marketName) => {
         }
 
         tbody += `<tr> 
-        <td>${m.id}</td>
-        <td>${m.Type}</td>
-        <td>${m.Rate}</td>
-        <td>${m.Amount}</td>
-        <td>${m.Total}</td>
-        <td>${m.Time}</td> 
-        </tr>`
+                    <td>${m.id}</td>
+                    <td>${m.Type}</td>
+                    <td>${m.Rate}</td>
+                    <td>${m.Amount}</td>
+                    <td>${m.Total}</td>
+                    <td>${m.Time}</td> 
+                </tr>`
     });
     const baslik = `<span style="margin-left: 40%;">
         <a target="_blank" href='/Exchange?market=${marketName.replace("/", "_")}'>${marketName}</a>
@@ -196,11 +196,11 @@ const MarketRapoGoster = (marketName) => {
 
     const html = `${baslik} ${geriDonButon}<br>
     <table id="sonuclarMarket" class="table table-striped table-hover table-condensed" style="font-size:15px; font-family:arial; width: 100%;">
-    <thead>
-    <tr><th>Market ID</th><th>Type</th><th>Rate</th><th>Amount</th><th>Total</th><th>Time</th></tr></thead>
-    <tbody>
-    ${tbody}
-    </tbody>
+        <thead>
+            <tr><th>Market ID</th><th>Type</th><th>Rate</th><th>Amount</th><th>Total</th><th>Time</th></tr></thead>
+        <tbody>
+            ${tbody}
+        </tbody>
     </table>`;
     $.unblockUI()
     $.blockUI({
