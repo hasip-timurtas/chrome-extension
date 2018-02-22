@@ -69,4 +69,4 @@ function sleep(saniye) {
   return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
 }
 
-Basla ();
+//Basla (); // ŞİMDİLİK DEAKTİF
