@@ -20,7 +20,7 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
-  if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete") {
+  if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete" && tab.status == 'complete') {
 
     if (tab.url.includes("/Exchange?market=")) {
       chrome.tabs.executeScript(tabId, {
