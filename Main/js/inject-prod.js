@@ -1,6 +1,4 @@
 var secilenMarket, buySirasi, sellSirasi, timerim, sayacTimer, marketOrderBook, activeBuy, activeSell;
-var sayfaKapanmaSuresi = 20 // bu Sayfa Refresh süresi oldu.
-setTimeout(SayfayiKapat, 1000 * sayfaKapanmaSuresi) // 1 dakika sonra refresh atılacak
 var _sellSirasi = 35 // Sell Sirasi 8 Den büyükse 9 veya üstüyse selii bozar öne alır.
 
 function SayfayiTemizle() {
@@ -36,55 +34,10 @@ async function getBests() {
 
   //SayfayiTemizle();
   LoadViews();
-  var appId = new URL(document.URL).searchParams.get("appId");
-  var marketId = $("#buy-form #market_id").val()
   secilenMarket = JSON.parse($("body").attr("datam"))
   paneliEkle();
   DbGuncelle();
-  SayaciAktifEt(); // Sayacı Aktif Et
   AlimSatimKontrol();
- 
-
-  /*
-  $.get("/api/v1/getmarketsummary?market_id=" + $("#buy-form #market_id").val()).done(data => {
-    secilenMarket = data.result;
-    paneliEkle();
-    DbGuncelle();
-    SayaciAktifEt(); // Sayacı Aktif Et
-    AlimSatimKontrol();
-  })
-*/
-
-  /*
-  $.get(
-    "/api/v1/getmarketsummary?market_id=" + $("#buy-form #market_id").val(),
-    function (data) {
-      secilenMarket = data.result;
-      paneliEkle();
-      DbGuncelle();
-      SayaciAktifEt(); // Sayacı Aktif Et
-      AlimSatimKontrol();
-    }
-  );
-
-  */
-}
-
-function SayfayiKapat() {
-  //window.close()
-  //window.location.reload()
-}
-
-function SayaciAktifEt() {
-  console.log("SayaciAktifEt");
-  var sayac = sayfaKapanmaSuresi;
-  sayacTimer = setInterval(function () {
-    if (sayac < 1) {
-      sayac = sayfaKapanmaSuresi;
-    }
-    $("#spSayac").html(sayac);
-    sayac--;
-  }, 1000);
 }
 
 function DbGuncelle() {
@@ -348,7 +301,7 @@ function sell() {
 
 function BuyFarkKontrolSellIcin() {
   console.log("BuyFarkKontrolSellIcin");
-  var yuzde = GetParameterByName("yuzde");
+  var yuzde = 1
   // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
   var satacagiFiyat = parseFloat(secilenMarket.AskPrice) - 0.00000001;
   var zararinaSat = GetParameterByName("zararinaSat");
@@ -360,36 +313,34 @@ function BuyFarkKontrolSellIcin() {
     }
   }
 
-  // Bu fonksiyon eğer alım satım arasında %10 ve üstü fark varsa 0 döndürür fark %10 dan düşürse aldıüı fiyata %10 ekler o ücreti döndürür.
+// ###### Eğer last buy boşsa en üste koyar satar.
   var recentTrades = user_recent_trades();
   var recentBuys = $.grep(recentTrades, function (e) {
     return e.trade_direction == "buy"
   });
 
   if (!recentBuys[0]) {
-    return result = {
+    return  {
       yuzde10Fark: false,
       yeniUcret: satacagiFiyat
     }
   }
 
+
   var aldigiFiyat = parseFloat(recentBuys[0].trade_price);
 
   var alimSatimYuzdeFarki = ((satacagiFiyat - aldigiFiyat) / aldigiFiyat * 100);
-  var result = {};
 
-  if (alimSatimYuzdeFarki >= Number(yuzde) / 3 * 2) {
-    result = {
+  if (alimSatimYuzdeFarki >= yuzde ) {
+    return {
       yuzde10Fark: true
     }
   } else {
-    result = {
+    return {
       yuzde10Fark: false,
-      yeniUcret: aldigiFiyat + (aldigiFiyat / 100 * 10)
+      yeniUcret: aldigiFiyat + (aldigiFiyat / 100 * 1)
     }
   }
-
-  return result;
 }
 
 function BuyIptalveRefresh() {
