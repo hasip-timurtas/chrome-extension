@@ -93,7 +93,7 @@ function FillTable() {
                     <td style="color:#feff7f"><a target="_blank" href='/Exchange?market=${dm.name.replace("/", "_")}'>${dm.name}</a></td>
                     <td style="color:#f48484">${dm.toplamBuy}</td>
                     <td style="color:#75cb75">${dm.toplamSell}</td> 
-                    <td style="color:${karRengi}">${dm.kalanAmount > 0 ? 0 : dm.toplamKar}</td> 
+                    <td style="color:${karRengi}">${dm.toplamSell > dm.toplamBuy ? dm.toplamKar : (dm.kalanAmount > 0 ? 0 : dm.toplamKar)}</td> 
                     <td style="color:#f48484">${dm.kalanAmount}</td>
                 </tr>`
     });
