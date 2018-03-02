@@ -275,6 +275,10 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
     guncelMarket.guncelYuzde = ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100)
     e.guncelMarket = guncelMarket
 
+    if (_openOrders.includes(e.name) || (guncelMarket.MarketID == e.marketId && parseFloat(e.amount) > 0.00001)) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
+      return true
+    }
+
     if (_userId == 5) {
       if (guncelMarket.Volume > 1000000) {
           e.tutar = e.tutar * 1.9
@@ -284,14 +288,10 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
           e.yuzde = e.yuze * 0.7
       } else if (guncelMarket.Volume > 100000) {
           e.tutar = e.tutar 
-          e.yuzde = e.yuzde 
+          e.yuzde = e.yuzde * 0.8
       } else {
           return false
       }
-    }
-
-    if (_openOrders.includes(e.name) || (guncelMarket.MarketID == e.marketId && parseFloat(e.amount) > 0.00001)) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
-      return true
     }
 
     return guncelMarket.MarketID == e.marketId && ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100) >= Number(e.yuzde)
