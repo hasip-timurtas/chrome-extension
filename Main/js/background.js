@@ -283,7 +283,7 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
     return guncelMarket.MarketID == e.marketId && ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100) >= Number(e.yuzde)
   })
 
-  kontroleUyanlar.sort((a, b) => b.guncelMarket.guncelYuzde - a.guncelMarket.guncelYuzde)
+  kontroleUyanlar.sort((a, b) => b.guncelMarket.Volume - a.guncelMarket.Volume)
   return kontroleUyanlar;
 }
 
