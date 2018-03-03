@@ -80,7 +80,7 @@ var toplam = toplamTutar + balancem
         runAt: "document_start"
       });
 
-      var marketId=GetParameterByName("marketId",tab.url)
+      var marketId = GetParameterByName("marketId", tab.url)
       var guncelMarket = _marketOzetler.find(mo => mo.MarketID == Number(marketId))
       chrome.tabs.executeScript(tabId, {
         code: `var datam = '${JSON.stringify(guncelMarket)}'; $("body").attr("datam",datam);`,
@@ -133,19 +133,6 @@ async function LogoutBildir() {
     });
   });
 
-  // SEND SMS ŞUANLIK DEAKTİF!
-  const SendSms = async () => {
-    //  http://keskinmedia.com/apim/sendlogout/2/8f03c10593f0abadef0b3084ba560826
-    var url = "http://keskinmedia.com/apim/sendlogout/";
-    url += _userId;
-    url += "/";
-    url += _access_token;
-
-    await axios(url);
-
-    loginSayfasiniAc();
-  }
-
   const loginSayfasiniAc = () => {
     chrome.tabs.query({
       url: "https://www.coinexchange.io/*"
@@ -160,9 +147,21 @@ async function LogoutBildir() {
       url: "https://www.coinexchange.io/login?noreload=true&_userId=" + _userId
     });
   }
-  //setTimeout(SendSms, 1000 * 60);
   setTimeout(loginSayfasiniAc, 1000 * 90);
   setTimeout(UygulamayiBaslat, 1000 * 60 * 5); // Eğer olduda Ana timerimiz başlamazsa 5 dakika sonra tekrar başlat 
+}
+
+
+const SendSms = async () => {
+  //  http://keskinmedia.com/apim/sendlogout/2/8f03c10593f0abadef0b3084ba560826
+  var url = "http://keskinmedia.com/apim/sendlogout/";
+  url += _userId;
+  url += "/";
+  url += _access_token;
+
+  await axios(url);
+
+  loginSayfasiniAc();
 }
 
 $(document).ready(function () {
@@ -232,7 +231,7 @@ function Basla() {
   GetMarkets(); // With UserName
   SayaciAktifEt();
   HataliSayfaKontrolSayaci();
-  setInterval(GetMarkets, 1000 * _sayacSuresi); 
+  setInterval(GetMarkets, 1000 * _sayacSuresi);
 }
 
 async function LoginCheck() {
@@ -281,16 +280,16 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
 
     if (_userId == 5) {
       if (guncelMarket.Volume > 1000000) {
-          e.tutar = e.tutar * 1.9
-          e.yuzde = e.yuze  * 0.5
+        e.tutar = e.tutar * 1.9
+        e.yuzde = e.yuze * 0.5
       } else if (guncelMarket.Volume > 200000) {
-          e.tutar = e.tutar * 1.4
-          e.yuzde = e.yuze * 0.7
+        e.tutar = e.tutar * 1.4
+        e.yuzde = e.yuze * 0.7
       } else if (guncelMarket.Volume > 100000) {
-          e.tutar = e.tutar 
-          e.yuzde = e.yuzde * 0.8
+        e.tutar = e.tutar
+        e.yuzde = e.yuzde * 0.8
       } else {
-          return false
+        return false
       }
     }
 
@@ -470,8 +469,8 @@ const openOrdersDataGuncelle = (prm) => {
 
 // WEBPAGE MESAJLAŞMA 
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
-  
-  
+
+
   switch (request.type) {
     case 'orders':
       // Gönderilen örnek mesaj order.js dosyasında 
@@ -485,7 +484,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
       console.log('Belirsiz data Type');
       break;
   }
-}); 
+});
 
 // RESPONSE İLE ÖRNEK MESAJ
 

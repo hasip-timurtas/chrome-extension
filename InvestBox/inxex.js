@@ -5,3 +5,13 @@ $.post("/ajax/system_investbox.php", params).done(data => {
     var result = JSON.parse(data);
     console.log(result.recordsTotal)
 })
+
+
+// Background.js de SendSms fonksiyonunu kullan. 
+/*
+    Yapılacaklar : 
+    Background.js ye yobit sayfasını ekle. uzak masaüstünde çalışsın yani _userId dolu ise çalışsın.
+    Background.js de listeyi güncel tutsun, yobit sayfası her güncellendiğinde bu liste kontrol edilsin.
+    Artış olduğunda Sendsms fonksiyonu kullanılarak sms gönderilsin.
+
+*/
