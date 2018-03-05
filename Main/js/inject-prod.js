@@ -1,533 +1,419 @@
-var secilenMarket, buySirasi, sellSirasi, timerim, sayacTimer, marketOrderBook, activeBuy, activeSell;
-var _sellSirasi = 35 // Sell Sirasi 8 Den büyükse 9 veya üstüyse selii bozar öne alır.
-
-function SayfayiTemizle() {
-  $("html").css("display", "none")
-}
-
-function LoadViews() {
-  console.log("LoadViews");
-  UserMarketOrdersViewModel();
-  UserRecentTradesViewModel(); // son işlemler
-
-  var activeMarketOrders = user_market_orders(); // Market Datalarını doldur. Bu foksyion sell ve buy datalarını dolduruyor. user_market_orders(); ve bu fonksiyonla dündürüyor.
-  activeBuy = $.grep(activeMarketOrders, function (e) {
-    return e.direction == "buy"
-  });
-
-  activeSell = $.grep(activeMarketOrders, function (e) {
-    return e.direction == "sell"
-  });
-
-}
-
-function paneliEkle() {
-  $("body").append(`
-      <div id='divim' style='padding:20px; width:251px; height:130px; background-color:#8fcaab; color:black; position:fixed; right:0; bottom:0; z-index:999;'>
-        <span id="spSayac" style="font-weight:bold;">0</span>
-        <div> <span>Durum: </span><span id="spnDurum">Henüz Başlatılmadı</span> </div>
-      </div>
-      `);
-}
-
-async function getBests() {
-
-  //SayfayiTemizle();
-  LoadViews();
-  secilenMarket = JSON.parse($("body").attr("datam"))
-  paneliEkle();
-  DbGuncelle();
-  AlimSatimKontrol();
-}
-
-function DbGuncelle() {
-  // Eğer satılacak tutar varsa veritabanına bunu yansıtacak. ve bu coin ile ilgili işlemde olduğunu belli edecek. böylelikle bakcgound.js bu coin sayfasını kapatmayacak. satış bittiğinde de aynı.
-  let toplam = 0;
-  const sellAmount = parseFloat($("#primary-balance-clickable").html()); // Sell Amount
-
-  if (sellAmount > 0) {
-    toplam += sellAmount;
+class InjectProd {
+  constructor () {
+    this.secilenMarket, this.marketOrderBook, this.activeBuy, this.activeSell
   }
 
-  var activeSellOrder = $.grep(user_market_orders(), function (e) {
-    return e.direction == "sell";
-  });
-
-  var alimisCoinMiktari = 0;
-
-  if (activeSellOrder.length > 0) {
-    alimisCoinMiktari = activeSellOrder[0].quantity;
+  async getBests() {
+    this.LoadViews();
+    this.secilenMarket = JSON.parse($('body').attr('datam'))
+    this.guncelAlimSatimYuzdeFarki = Math.round((this.secilenMarket.AskPrice - this.secilenMarket.BidPrice) / this.secilenMarket.BidPrice * 100);
+    this.DbGuncelle();
+    this.AlimSatimKontrol();
   }
 
-  toplam += parseFloat(alimisCoinMiktari);
+  LoadViews() {
+    console.log('LoadViews');
+    UserMarketOrdersViewModel(); UserRecentTradesViewModel(); // son işlemler
+    const activeMarketOrders = user_market_orders(); // Market Datalarını doldur. Bu foksyion sell ve buy datalarını dolduruyor. user_market_orders(); ve bu fonksiyonla dündürüyor.
+    this.activeBuy = $.grep(activeMarketOrders, e => e.direction == 'buy');
+    this.activeSell = $.grep(activeMarketOrders, e => e.direction == 'sell');
+  }
 
-  var marketId = GetParameterByName("marketId");
-  var url = "https://keskinmedia.com/apim/changeamount/" + marketId + "/" + toplam;
+  AlimSatimKontrol() {
+    console.log('AlimSatimKontrol')
+    const orderSellCount = user_sell_order_prices.length, orderBuyCount = user_buy_order_prices.length, tutar = Number(this.GetParameterByName('tutar')), type = this.GetParameterByName('type')
+    const sellAmount = Number($('#primary-balance-clickable').html()), buyAmount = Number($('#secondary-balance-clickable').html()) // Sell ve Buy Amount
 
-
-  $.get(
-    url,
-    function (data) {
-      if (data.result == true) {
-        console.log("Tutar güncellendi");
+    sellAmount > 0.0001 && orderSellCount > 0 ? this.SellIptalveRefresh() : this.sell() // 1. sell değeri varsa direk sat. ve Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
+    buyAmount >= tutar && orderBuyCount < 1 && this.buy()  //2. bakiyemiz varsa ve aktif buy yoksa buy aç 
+    //3. TYPE SADECE S İSE BUYU İPTAL EDER. SADECE B İSE SELLİ Yİ İPTAL EDER.
+    type == 'S' && this.BuyIptalveRefresh()
+    type == 'B' && this.SellIptalveRefresh()
+    this.OneGecenVarmiKontrol();
+  }
+    
+    /* 1 if (sellAmount > 0.0001) { // sell değeri varsa direk sat.
+      if (orderSellCount > 0) {
+        this.SellIptalveRefresh(); // Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
+      } else {
+        this.sell();
       }
     }
-  );
+    
+    2
+    if (buyAmount >= tutar) { // bakiyemiz varsa
+      if (orderBuyCount < 1) { // aktif buy yoksa buy aç
+        this.buy();
+      }
+    }
 
-}
+    3
+    if (type == 'S') {
+      this.BuyIptalveRefresh();
+    } else if (type == 'B') {
+      this.SellIptalveRefresh();
+    }*/
+    
+  GetKacinci() {
+    return new Promise(resolve => {
+      $.get('/api/v1/getorderbook?market_id=' + $('#buy-form #market_id').val(),data => {
+          this.marketOrderBook = data.result;
+          var result = {buySirasi: 0,sellSirasi: 0}
+
+          if (user_buy_order_prices.length > 0)
+            var secilenBuyPrice = $.grep(this.marketOrderBook.BuyOrders, e => Number(e.Price) == user_buy_order_prices[0])
+            result.buySirasi = secilenBuyPrice && secilenBuyPrice.length > 0 && this.marketOrderBook.BuyOrders.indexOf(secilenBuyPrice[0]) + 1
+
+          if (user_sell_order_prices.length > 0)
+            var secilenSellPrice = $.grep(this.marketOrderBook.SellOrders, e => Number(e.Price) == user_sell_order_prices[0]);
+            result.sellSirasi = secilenSellPrice && secilenSellPrice.length > 0 && this.marketOrderBook.SellOrders.indexOf(secilenSellPrice[0]) + 1
+
+          resolve(result)
+        }
+      );
+    })
+  }
+
+  async OneGecenVarmiKontrol() {
+    console.log('OneGecenVarmiKontrol');
+    var data = await this.GetKacinci();
+    console.log(data);
+    data.buySirasi > 1 && this.BuyIptalveRefresh()
+
+    if (data.sellSirasi > 1) {
+      var result = this.BuyFarkKontrolSellIcin(data.sellSirasi); // 0 değilse yeni fiyatı gir.
+      if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
+        this.SellIptalveRefresh();
+      }
+    }
+  }
+
+  OrantiliBuyAlKontrolu() {
+    console.log('OrantiliBuyAlKontrolu');
+    var sellAmount = parseFloat($('#primary-balance-clickable').html());
+    var orderSellCount = user_sell_order_prices.length;
+    var tutar = parseFloat(this.GetParameterByName('tutar'));
+
+    if (sellAmount > 0.0001 || orderSellCount > 0) { // sell amount 0 dan büyükse yada sell amount 0 dan daha büyükse daha önce alım yapmış
+      if (sellAmount > 0.0001) {
+        return false; // Sell Amount 0 dan büyükse buy almasın bıraksın bi sell amountu selle koysun. kafa karışmasın. Sell amount boş olduktan sonra hesaplamayı açık orderlerdan alıcaz
+      }
+
+      // son buy un pricesini alıyoruz bu örnekte 0.03610202
+      var recentTrades = user_recent_trades();
+      var recentBuys = $.grep(recentTrades, function (e) {
+        return e.trade_direction == 'buy'
+      });
+
+      var sonBuyPrice = parseFloat(recentBuys[0].trade_price);
+      // tutarımızı alıyoruz bu örnekte 10000
+
+      // tutar / sonBuyPrice Yaptığımızda bize girdiğimiz tutar ile ne kadarlık coin alacağımızı gösterir
+      var alinacakCoinMiktari = tutar / sonBuyPrice;
+      // active sell orderdan elimizde bulunan satın alınmış coinin miktarını alıyoruz
+  
+      var alimisCoinMiktari = 0;
+
+      if (this.activeSell.length > 0) {
+        alimisCoinMiktari = this.activeSell[0].quantity;
+      }
+
+      // Alınmış coin alınacaktan küçükse almaya devam et ne zamanki 10 bini geçti o zaman dur.
+      if (alimisCoinMiktari < alinacakCoinMiktari) {
+        var yeniTutar = alinacakCoinMiktari - alimisCoinMiktari;
+        // Burada tutar doge değilde diğer coinden girdiği için amounta ekledik. eğer bunu aşağıdaki gibi totale ekleseydik. 3000 doluk değilde 3000 bin diğer coinlik değeri doga yazar alırdı. örnek 3000 god 30 coin ise 30 dogluk alırdı.
+        $('#sell-form #inputAmount').val(yeniTutar);
+        return true;
+      } else {
+        return false;
+      }
 
 
-function AlimSatimKontrol() {
-  console.log("AlimSatimKontrol");
-  var orderSellCount = user_sell_order_prices.length;
-  var orderBuyCount = user_buy_order_prices.length;
+    } else { // sell amount 0 dan büyük değilse zaten daha önce buy almamış devam et.
+      // Normal buy girilecek ama tutar doge üzerinden girilecek.
+      $('#buy-form #inputTotal').val(tutar);
+      return true;
+    }
 
-  const sellAmount = parseFloat($("#primary-balance-clickable").html()); // Sell Amount
-  const buyAmount = parseFloat($("#secondary-balance-clickable").html()); // Buy Amount
+  }
 
-  if (sellAmount > 0.0001) { // sell değeri varsa direk sat.
-    if (orderSellCount > 0) {
-      SellIptalveRefresh(); // Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
+  buy() {
+    console.log('buy');
+    var yuzde = this.GetParameterByName('yuzde');
+    var type = this.GetParameterByName('type');
+    if (type == 'S') {
+      console.log('Alış iptal çünkü sadece satış girildi');
+      return;
+    }
+
+    if (this.guncelAlimSatimYuzdeFarki < parseFloat(yuzde)) {
+      console.log('Alış iptal çünkü % farkı ' + yuzde + ' den küçük. Fark : ' + this.guncelAlimSatimYuzdeFarki);
+      return;
+    }
+
+    if (!this.OrantiliBuyAlKontrolu()) {
+      console.log('Yeterince buy aldı daha fazla alma. Satış yap. Böylelikle tutar 10 bin girilmişse 10 bin dogelik coin alır ve satana kadar durmaz.satınca iş biter.');
+      return;
+    }
+
+    console.log('Alımda');
+
+    orderType = '1';
+    var yeniFiyat = parseFloat(this.secilenMarket.BidPrice) + 0.00000001;
+    yeniFiyat = yeniFiyat.toFixed(8);
+    $('#buy-form #inputPrice').val(yeniFiyat);
+    this.InputPriceKeyUpBuy();
+    confirmOrderSubmitCore();
+
+  }
+
+  sell() {
+    console.log('sell');
+    var tutar = $('#primary-balance-clickable').html() //
+    var type = this.GetParameterByName('type');
+
+    if (type == 'B') {
+      console.log('Satış iptal çünkü sadece alış girildi');
+      return;
+    }
+
+
+    var result = this.BuyFarkKontrolSellIcin(); // 0 değilse yeni fiyatı gir.
+
+    var yeniFiyat = 0;
+
+    if (result.yuzde10Fark) { // Alım satıl arasında %10 ve üstü fark varsa normal olarak ekler oda en önde olur.
+      yeniFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001;
+      console.log('Alım satım arasında %10 dan fazla fark var, satış 1. sırada');
     } else {
-      sell();
+      // Alım ile satım arasındaki fark %10 dan düşükse  aldığı fiyata %10 ekleyip satışa koyar oda arka sıraya ekler.
+      yeniFiyat = result.yeniUcret;
+      console.log('Alım satım arasında %10 fark yok o yüzden %10 ekleyip satışa sürüldü o yüzden satış 1. sırada değil.');
     }
+
+    orderType = '0';
+    yeniFiyat = yeniFiyat.toFixed(8);
+    $('#sell-form #inputPrice').val(yeniFiyat);
+    $('#sell-form #inputAmount').val(tutar);
+    this.InputPriceKeyUpSell();
+    confirmOrderSubmitCore();
   }
 
-  var tutar = Number(GetParameterByName("tutar"))
+  BuyFarkKontrolSellIcin() {
+    console.log('BuyFarkKontrolSellIcin');
+    var yuzde = 1
+    // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
+    var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001;
+    var zararinaSat = this.GetParameterByName('zararinaSat');
 
-  if (buyAmount >= tutar) { // bakiyemiz varsa
-    if (orderBuyCount < 1) { // aktif buy yoksa buy aç
-      buy();
-    }
-  }
-
-  var type = GetParameterByName("type");
-  // TYPE SADECE S İSE BUYU İPTAL EDER. SADECE B İSE SELLİ Yİ İPTAL EDER.
-  if (type == "S") {
-    BuyIptalveRefresh();
-  } else if (type == "B") {
-    SellIptalveRefresh();
-  }
-
-  OneGecenVarmiKontrol();
-
-}
-
-function getKacinci(saniye) {
-  return new Promise(resolve => {
-    $.get(
-      "/api/v1/getorderbook?market_id=" + $("#buy-form #market_id").val(),
-      function (data) {
-        marketOrderBook = data.result;
-
-        var result = {
-          buySirasi: 0,
-          sellSirasi: 0
-        }
-
-        if (user_buy_order_prices.length > 0) {
-          var secilenBuyPrice = $.grep(marketOrderBook.BuyOrders, function (e) {
-            return parseFloat(e.Price) == user_buy_order_prices[0]
-          });
-
-          if (secilenBuyPrice && secilenBuyPrice.length > 0) {
-            result.buySirasi = marketOrderBook.BuyOrders.indexOf(secilenBuyPrice[0]) + 1;
-          }
-        }
-
-        if (user_sell_order_prices.length > 0) {
-          var secilenSellPrice = $.grep(marketOrderBook.SellOrders, function (e) {
-            return parseFloat(e.Price) == user_sell_order_prices[0]
-          });
-
-          if (secilenSellPrice && secilenSellPrice.length > 0) {
-            result.sellSirasi = marketOrderBook.SellOrders.indexOf(secilenSellPrice[0]) + 1;
-          }
-        }
-
-        resolve(result)
+    if (zararinaSat == 'A') {
+      return {
+        yuzde10Fark: true, // Eğer öne geçen varsa pazarı boz bu öne geçen varmı kontolü için 
+        yeniUcret: satacagiFiyat // Bu sell fonksiyonu için 
       }
-    );
-  })
-}
-
-
-async function OneGecenVarmiKontrol() {
-  console.log("OneGecenVarmiKontrol");
-  var data = await getKacinci();
-  console.log(data);
-
-  // Buy varsa ama var olan buy alım satım farkı yüzdemizden küçükse iptal edilsin.
-  var alimSatimYuzdeFarki = Math.round((secilenMarket.AskPrice - secilenMarket.BidPrice) / secilenMarket.BidPrice * 100);
-
-  if (data.buySirasi > 1) {
-    BuyIptalveRefresh()
-  }
-
-  if (data.sellSirasi > _sellSirasi) {
-    SellIptalveUsteKoy()
-    return
-  }
-
-
-  if (data.sellSirasi > 1) {
-    var result = BuyFarkKontrolSellIcin(data.sellSirasi); // 0 değilse yeni fiyatı gir.
-    if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
-      SellIptalveRefresh();
-    }
-  }
-
-
-}
-
-
-function OrantiliBuyAlKontrolu() {
-  console.log("OrantiliBuyAlKontrolu");
-  var sellAmount = parseFloat($("#primary-balance-clickable").html());
-  var orderSellCount = user_sell_order_prices.length;
-  var tutar = parseFloat(GetParameterByName("tutar"));
-
-  if (sellAmount > 0.0001 || orderSellCount > 0) { // sell amount 0 dan büyükse yada sell amount 0 dan daha büyükse daha önce alım yapmış
-    if (sellAmount > 0.0001) {
-      return false; // Sell Amount 0 dan büyükse buy almasın bıraksın bi sell amountu selle koysun. kafa karışmasın. Sell amount boş olduktan sonra hesaplamayı açık orderlerdan alıcaz
     }
 
-    // son buy un pricesini alıyoruz bu örnekte 0.03610202
+  // ###### Eğer last buy boşsa en üste koyar satar.
     var recentTrades = user_recent_trades();
     var recentBuys = $.grep(recentTrades, function (e) {
-      return e.trade_direction == "buy"
+      return e.trade_direction == 'buy'
     });
 
-    var sonBuyPrice = parseFloat(recentBuys[0].trade_price);
-    // tutarımızı alıyoruz bu örnekte 10000
+    if (!recentBuys[0]) {
+      return {
+        yuzde10Fark: false,
+        yeniUcret: satacagiFiyat
+      }
+    }
 
 
-    // tutar / sonBuyPrice Yaptığımızda bize girdiğimiz tutar ile ne kadarlık coin alacağımızı gösterir
-    var alinacakCoinMiktari = tutar / sonBuyPrice;
-    // active sell orderdan elimizde bulunan satın alınmış coinin miktarını alıyoruz
-    var activeSellOrder = $.grep(user_market_orders(), function (e) {
-      return e.direction == "sell";
+    var aldigiFiyat = parseFloat(recentBuys[0].trade_price);
+
+    var alimSatimYuzdeFarki = ((satacagiFiyat - aldigiFiyat) / aldigiFiyat * 100);
+
+    if (alimSatimYuzdeFarki >= yuzde ) {
+      return {
+        yuzde10Fark: true
+      }
+    } else {
+      return {
+        yuzde10Fark: false,
+        yeniUcret: aldigiFiyat + (aldigiFiyat / 100 * 1)
+      }
+    }
+  }
+
+  BuyIptalveRefresh() {
+
+    if (this.activeBuy.length == 0) {
+      return;
+    }
+
+    console.log('BuyIptalveRefresh');
+    var cancelOrderID = this.activeBuy[0].order_id;
+    $.ajax({
+      type: 'POST',
+      url: Routing.generate('deleteorder'),
+      data: 'order_id=' + cancelOrderID,
+      dataType: 'json',
+      timeout: 5000,
+      success: function (data, status) {
+        window.location.reload();
+      }
     });
+  }
+
+  SellIptalveRefresh() {
+    if (this.activeSell.length == 0) {
+      return;
+    }
+
+    console.log('SellIptalveRefresh');
+    var cancelOrderID = this.activeSell[0].order_id;
+
+    $.ajax({
+      type: 'POST',
+      url: Routing.generate('deleteorder'),
+      data: 'order_id=' + cancelOrderID,
+      dataType: 'json',
+      timeout: 5000,
+      success: function (data, status) {
+        window.location.reload();
+      }
+    });
+  }
+
+  DbGuncelle() {
+    // Eğer satılacak tutar varsa veritabanına bunu yansıtacak. ve bu coin ile ilgili işlemde olduğunu belli edecek. böylelikle bakcgound.js bu coin sayfasını kapatmayacak. satış bittiğinde de aynı.
+    let toplam = 0;
+    const sellAmount = parseFloat($('#primary-balance-clickable').html()); // Sell Amount
+
+    if (sellAmount > 0) {
+      toplam += sellAmount;
+    }
 
     var alimisCoinMiktari = 0;
 
-    if (activeSellOrder.length > 0) {
-      alimisCoinMiktari = activeSellOrder[0].quantity;
+    if (this.activeSell.length > 0) {
+      alimisCoinMiktari = this.activeSell[0].quantity;
     }
 
-    // Alınmış coin alınacaktan küçükse almaya devam et ne zamanki 10 bini geçti o zaman dur.
-    if (alimisCoinMiktari < alinacakCoinMiktari) {
-      var yeniTutar = alinacakCoinMiktari - alimisCoinMiktari;
-      // Burada tutar doge değilde diğer coinden girdiği için amounta ekledik. eğer bunu aşağıdaki gibi totale ekleseydik. 3000 doluk değilde 3000 bin diğer coinlik değeri doga yazar alırdı. örnek 3000 god 30 coin ise 30 dogluk alırdı.
-      $("#sell-form #inputAmount").val(yeniTutar);
-      return true;
-    } else {
-      return false;
-    }
+    toplam += parseFloat(alimisCoinMiktari);
+
+    var marketId = this.GetParameterByName('marketId');
+    var url = 'https://keskinmedia.com/apim/changeamount/' + marketId + '/' + toplam;
 
 
-  } else { // sell amount 0 dan büyük değilse zaten daha önce buy almamış devam et.
-    // Normal buy girilecek ama tutar doge üzerinden girilecek.
-    $("#buy-form #inputTotal").val(tutar);
-    return true;
-  }
-
-}
-
-
-function buy() {
-  console.log("buy");
-  var yuzde = GetParameterByName("yuzde");
-  var type = GetParameterByName("type");
-  if (type == "S") {
-    $("#spnDurum").html("Alış iptal çünkü sadece satış girildi");
-    return;
-  }
-
-  var alimSatimYuzdeFarki = ((secilenMarket.AskPrice - secilenMarket.BidPrice) / secilenMarket.BidPrice * 100);
-
-  if (alimSatimYuzdeFarki < parseFloat(yuzde)) {
-    $("#spnDurum").html("Alış iptal çünkü % farkı " + yuzde + " den küçük. Fark : " + alimSatimYuzdeFarki);
-    return;
-  }
-
-  if (!OrantiliBuyAlKontrolu()) {
-    $("#spnDurum").html("Yeterince buy aldı daha fazla alma. Satış yap. Böylelikle tutar 10 bin girilmişse 10 bin dogelik coin alır ve satana kadar durmaz.satınca iş biter.");
-    return;
-  }
-
-  $("#spnDurum").html("Alımda");
-
-  orderType = '1';
-  var yeniFiyat = parseFloat(secilenMarket.BidPrice) + 0.00000001;
-  yeniFiyat = yeniFiyat.toFixed(8);
-  $("#buy-form #inputPrice").val(yeniFiyat);
-  InputPriceKeyUpBuy();
-  confirmOrderSubmitCore();
-
-}
-
-function sell() {
-  console.log("sell");
-  var tutar = $("#primary-balance-clickable").html() //
-  var type = GetParameterByName("type");
-
-  if (type == "B") {
-    $("#spnDurum").html("Satış iptal çünkü sadece alış girildi");
-    return;
+    $.get(
+      url,
+      function (data) {
+        if (data.result == true) {
+          console.log('Tutar güncellendi');
+        }
+      }
+    );
   }
 
 
-  var result = BuyFarkKontrolSellIcin(); // 0 değilse yeni fiyatı gir.
 
-  var yeniFiyat = 0;
-
-  if (result.yuzde10Fark) { // Alım satıl arasında %10 ve üstü fark varsa normal olarak ekler oda en önde olur.
-    yeniFiyat = parseFloat(secilenMarket.AskPrice) - 0.00000001;
-    $("#spnDurum").html("Alım satım arasında %10 dan fazla fark var, satış 1. sırada");
-  } else {
-    // Alım ile satım arasındaki fark %10 dan düşükse  aldığı fiyata %10 ekleyip satışa koyar oda arka sıraya ekler.
-    yeniFiyat = result.yeniUcret;
-    $("#spnDurum").html("Alım satım arasında %10 fark yok o yüzden %10 ekleyip satışa sürüldü o yüzden satış 1. sırada değil.");
-  }
-
-  orderType = '0';
-  yeniFiyat = yeniFiyat.toFixed(8);
-  $("#sell-form #inputPrice").val(yeniFiyat);
-  $("#sell-form #inputAmount").val(tutar);
-  InputPriceKeyUpSell();
-  confirmOrderSubmitCore();
-}
-
-function BuyFarkKontrolSellIcin() {
-  console.log("BuyFarkKontrolSellIcin");
-  var yuzde = 1
-  // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
-  var satacagiFiyat = parseFloat(secilenMarket.AskPrice) - 0.00000001;
-  var zararinaSat = GetParameterByName("zararinaSat");
-
-  if (zararinaSat == "A") {
-    return result = {
-      yuzde10Fark: true, // Eğer öne geçen varsa pazarı boz bu öne geçen varmı kontolü için 
-      yeniUcret: satacagiFiyat // Bu sell fonksiyonu için 
-    }
-  }
-
-// ###### Eğer last buy boşsa en üste koyar satar.
-  var recentTrades = user_recent_trades();
-  var recentBuys = $.grep(recentTrades, function (e) {
-    return e.trade_direction == "buy"
-  });
-
-  if (!recentBuys[0]) {
-    return  {
-      yuzde10Fark: false,
-      yeniUcret: satacagiFiyat
-    }
-  }
-
-
-  var aldigiFiyat = parseFloat(recentBuys[0].trade_price);
-
-  var alimSatimYuzdeFarki = ((satacagiFiyat - aldigiFiyat) / aldigiFiyat * 100);
-
-  if (alimSatimYuzdeFarki >= yuzde ) {
-    return {
-      yuzde10Fark: true
-    }
-  } else {
-    return {
-      yuzde10Fark: false,
-      yeniUcret: aldigiFiyat + (aldigiFiyat / 100 * 1)
-    }
-  }
-}
-
-function BuyIptalveRefresh() {
-
-  if (activeBuy.length == 0) {
-    return;
-  }
-
-  console.log("BuyIptalveRefresh");
-  var cancelOrderID = activeBuy[0].order_id;
-  $.ajax({
-    type: "POST",
-    url: Routing.generate('deleteorder'),
-    data: "order_id=" + cancelOrderID,
-    dataType: 'json',
-    timeout: 5000,
-    success: function (data, status) {
-      window.location.reload();
-    }
-  });
-}
-
-function SellIptalveRefresh() {
-  if (activeSell.length == 0) {
-    return;
-  }
-
-  console.log("SellIptalveRefresh");
-  var cancelOrderID = activeSell[0].order_id;
-
-  $.ajax({
-    type: "POST",
-    url: Routing.generate('deleteorder'),
-    data: "order_id=" + cancelOrderID,
-    dataType: 'json',
-    timeout: 5000,
-    success: function (data, status) {
-      window.location.reload();
-    }
-  });
-}
-
-async function SellIptalveUsteKoy() {
-  if (activeSell.length == 0) {
-    return;
-  }
-
-  console.log("Sell Iptal ve ÜSTE KOY");
-  var cancelOrderID = activeSell[0].order_id;
-
-  var yeniFiyat = marketOrderBook.SellOrders[10].Price // 3. Sıranın fiyatı. Eğer sıra 6. sıray geçerse 3. sıraya koysun.
-  var tutar = activeSell[0].quantity;
-
-  $("#spnDurum").html(`Sel Bozulup Üste Alınacak:
-  Yeni Fiyat: ${yeniFiyat}
-  Tutar: ${tutar}
-  `);
-
-  $.ajax({
-    type: "POST",
-    url: Routing.generate('deleteorder'),
-    data: "order_id=" + cancelOrderID,
-    dataType: 'json',
-    timeout: 5000,
-    success: function (data, status) {
-      // Nothing
-    }
-  });
-
-
-  await sleep(5);
-
-  orderType = '0';
-  //yeniFiyat = yeniFiyat.toFixed(8);
-  $("#sell-form #inputPrice").val(yeniFiyat);
-  $("#sell-form #inputAmount").val(tutar);
-  InputPriceKeyUpSell();
-  confirmOrderSubmitCore();
-
-
-
-}
-
-
-
-function InputPriceKeyUpBuy() {
-  console.log("InputPriceKeyUpBuy");
-  var b_price = $("#buy-form #inputPrice").val();
-  var b_amount = $("#buy-form #inputAmount").val();
-  var b_total = $("#buy-form #inputTotal").val();
-  b_price = parseFloat(b_price);
-  b_amount = parseFloat(b_amount);
-  b_total = parseFloat(b_total);
-  if (b_price === "" || b_price === 0 || isNaN(b_price)) {
-    return;
-  }
-  if (b_amount !== "" && b_amount !== 0 && !isNaN(b_amount)) {
-    updateBuyOrderForm();
-  } else {
-    if (b_total === "" || b_total === 0 || isNaN(b_total)) {
+  InputPriceKeyUpBuy() {
+    console.log('InputPriceKeyUpBuy');
+    var b_price = $('#buy-form #inputPrice').val();
+    var b_amount = $('#buy-form #inputAmount').val();
+    var b_total = $('#buy-form #inputTotal').val();
+    b_price = parseFloat(b_price);
+    b_amount = parseFloat(b_amount);
+    b_total = parseFloat(b_total);
+    if (b_price === '' || b_price === 0 || isNaN(b_price)) {
       return;
+    }
+    if (b_amount !== '' && b_amount !== 0 && !isNaN(b_amount)) {
+      this.updateBuyOrderForm();
     } else {
-      b_amount = b_total / b_price;
-      $("#buy-form #inputAmount").val(b_amount);
-      updateBuyOrderForm();
+      if (b_total === '' || b_total === 0 || isNaN(b_total)) {
+        return;
+      } else {
+        b_amount = b_total / b_price;
+        $('#buy-form #inputAmount').val(b_amount);
+        this.updateBuyOrderForm();
+      }
     }
   }
-}
 
-function InputPriceKeyUpSell() {
-  console.log("InputPriceKeyUpSell");
-  var s_price = $("#sell-form #inputPrice").val();
-  var s_amount = $("#sell-form #inputAmount").val();
-  var s_total = $("#sell-form #inputTotal").val();
-  s_price = parseFloat(s_price);
-  s_amount = parseFloat(s_amount);
-  s_total = parseFloat(s_total);
-  if (s_price === "" || s_price === 0 || isNaN(s_price)) {
-    return;
-  }
-  if (s_amount !== "" && s_amount !== 0 && !isNaN(s_amount)) {
-    updateSellOrderForm();
-  } else {
-    if (s_total === "" || s_total === 0 || isNaN(s_total)) {
+  InputPriceKeyUpSell() {
+    console.log('InputPriceKeyUpSell');
+    var s_price = $('#sell-form #inputPrice').val();
+    var s_amount = $('#sell-form #inputAmount').val();
+    var s_total = $('#sell-form #inputTotal').val();
+    s_price = parseFloat(s_price);
+    s_amount = parseFloat(s_amount);
+    s_total = parseFloat(s_total);
+    if (s_price === '' || s_price === 0 || isNaN(s_price)) {
       return;
-    } else {
-      s_amount = s_total / s_price;
-      $("#sell-form #inputAmount").val(s_amount);
+    }
+    if (s_amount !== '' && s_amount !== 0 && !isNaN(s_amount)) {
       updateSellOrderForm();
+    } else {
+      if (s_total === '' || s_total === 0 || isNaN(s_total)) {
+        return;
+      } else {
+        s_amount = s_total / s_price;
+        $('#sell-form #inputAmount').val(s_amount);
+        updateSellOrderForm();
+      }
     }
   }
-}
 
-function GetParameterByName(name) {
-  console.log("GetParameterByName");
-  var url = document.URL;
-  name = name.replace(/[\[\]]/g, "\\$&");
-  var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-    results = regex.exec(url);
-  if (!results) return null;
-  if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
-
-getBests();
-
-
-function AlimveSatimUyumluMu() { // BU FONKSİYON ÇAĞIRILMIYOR.
-  console.log("AlimveSatimUyumluMu");
-  /*
-
-  SON 5 SAATLİK ALIM VE SATIM ARASINDA
-  */
-
-  var recentTrades = user_recent_trades();
-  var neKadardanAldi = 0;
-  var neKadardanSatti = 0;
-
-  var recentTrades = user_recent_trades();
-  var recents = $.grep(recentTrades, function (e) {
-    return new Date(e.trade_time) > Date.now() - 1000 * 60 * 60 * 5 // son 5 saat önceki alışsatışları getir.
-  });
-
-
-  var recentBuys = $.grep(recents, function (e) {
-    return e.trade_direction == "buy"
-  });
-
-  var recentSells = $.grep(recents, function (e) {
-    return e.trade_direction == "sell"
-  });
-
-
-  if (recentBuys.length > 0) {
-    neKadardanAldi = recentBuys[0].trade_price;
-  } else {
-    neKadardanAldi = SonBuyDegeriniAl();
+  GetParameterByName(name) {
+    console.log('GetParameterByName');
+    var url = document.URL;
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+      results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
   }
 
+  AlimveSatimUyumluMu() { // BU FONKSİYON ÇAĞIRILMIYOR.
+    console.log('AlimveSatimUyumluMu');
+    /*
 
+    SON 5 SAATLİK ALIM VE SATIM ARASINDA
+    */
+
+    var recentTrades = user_recent_trades();
+    var neKadardanAldi = 0;
+    var neKadardanSatti = 0;
+
+    var recentTrades = user_recent_trades();
+    var recents = $.grep(recentTrades, function (e) {
+      return new Date(e.trade_time) > Date.now() - 1000 * 60 * 60 * 5 // son 5 saat önceki alışsatışları getir.
+    });
+
+
+    var recentBuys = $.grep(recents, function (e) {
+      return e.trade_direction == 'buy'
+    });
+
+    var recentSells = $.grep(recents, function (e) {
+      return e.trade_direction == 'sell'
+    });
+
+
+    if (recentBuys.length > 0) {
+      neKadardanAldi = recentBuys[0].trade_price;
+    } else {
+      neKadardanAldi = this.SonBuyDegeriniAl();
+    }
+  }
+
+  sleep(saniye) {
+    return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
+  }
 }
 
-function sleep(saniye) {
-  return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
-}
+var injectProd = new InjectProd();
+ 
+injectProd.getBests();
 
-/*
-UserMarketOrdersViewModel()
-user_market_orders()
-*/
