@@ -22,13 +22,13 @@ class InjectProd {
     const sellAmount = this.secilenMarket.BidPrice *  Number($('#primary-balance-clickable').html())
     const buyAmount = Number($('#secondary-balance-clickable').html()) // Sell ve Buy Amount
 
-    await this.OneGecenVarmiKontrol()
-
-    sellAmount > 0.0001 && orderSellCount > 0 ? this.SellIptalveRefresh() : this.sell() // 1. sell değeri varsa direk sat. ve Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
-    buyAmount >= tutar && orderBuyCount < 1 && this.buy()  //2. bakiyemiz varsa ve aktif buy yoksa buy aç 
+    sellAmount > 0.0001 && orderSellCount > 0 ? await this.SellIptalveRefresh() : await this.sell() // 1. sell değeri varsa direk sat. ve Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
+    buyAmount >= tutar && orderBuyCount < 1 && await this.buy()  //2. bakiyemiz varsa ve aktif buy yoksa buy aç 
     //3. TYPE SADECE S İSE BUYU İPTAL EDER. SADECE B İSE SELLİ Yİ İPTAL EDER.
-    type == 'S' && this.BuyIptalveRefresh()
-    type == 'B' && this.SellIptalveRefresh()
+    type == 'S' && await this.BuyIptalveRefresh()
+    type == 'B' && await this.SellIptalveRefresh()
+
+    await this.OneGecenVarmiKontrol()
   }
     
   GetKacinci() {
@@ -54,6 +54,7 @@ class InjectProd {
   }
 
   async OneGecenVarmiKontrol() {
+    /*
     var data = await this.GetKacinci()
 
     // Buy 1. sırada değilse veya. Buy 1. sıradaysa ve bir önceki buy ile arasında 1 satoshi fark yoksa buy boz ve iptal. Birdahakinde düzgün kuracaktır.
@@ -66,6 +67,31 @@ class InjectProd {
         await this.SellIptalveRefresh()
       }
     }
+    */
+
+   console.log("OneGecenVarmiKontrol");
+   var data = await getKacinci();
+   console.log(data);
+ 
+   // Buy varsa ama var olan buy alım satım farkı yüzdemizden küçükse iptal edilsin.
+   var alimSatimYuzdeFarki = Math.round((secilenMarket.AskPrice - secilenMarket.BidPrice) / secilenMarket.BidPrice * 100);
+ 
+   if (data.buySirasi > 1) {
+     BuyIptalveRefresh()
+   }
+ 
+   if (data.sellSirasi > _sellSirasi) {
+     SellIptalveUsteKoy()
+     return
+   }
+ 
+ 
+   if (data.sellSirasi > 1) {
+     var result = BuyFarkKontrolSellIcin(data.sellSirasi); // 0 değilse yeni fiyatı gir.
+     if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
+       SellIptalveRefresh();
+     }
+   }
   }
 
   OrantiliBuyAlKontrolu() {
