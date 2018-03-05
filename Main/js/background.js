@@ -10,6 +10,8 @@ var _toplamTutar = 0
 const chromep = new ChromePromise();
 var _appId = chrome.runtime.id;
 var _marketOzetler = []
+var _kontroleUyanlar = []
+var _userDbMarketler =[]
 
 function UygulamayiBaslat() {
   _isPaused = false
@@ -273,45 +275,84 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
 
     guncelMarket.guncelYuzde = ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100)
     e.guncelMarket = guncelMarket
-
     if (_openOrders.includes(e.name) || (guncelMarket.MarketID == e.marketId && parseFloat(e.amount) > 0.00001)) { // Amount 0 dan büyükse direk bunu döndür. satmak için.
       return true
     }
-
-    if (_userId == 5) {
-      if (guncelMarket.Volume > 1000000) {
-        e.tutar = e.tutar * 1.9
-        e.yuzde = e.yuze * 0.5
-      } else if (guncelMarket.Volume > 200000) {
-        e.tutar = e.tutar * 1.4
-        e.yuzde = e.yuze * 0.7
-      } else if (guncelMarket.Volume > 100000) {
-        e.tutar = e.tutar
-        e.yuzde = e.yuzde * 0.8
-      } else {
-        return false
-      }
-    }
-
     return guncelMarket.MarketID == e.marketId && ((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100) >= Number(e.yuzde)
   })
 
-  kontroleUyanlar.sort((a, b) => b.guncelMarket.Volume - a.guncelMarket.Volume)
+  kontroleUyanlar.sort((a, b) => b.guncelMarket.guncelYuzde - a.guncelMarket.guncelYuzde)
   return kontroleUyanlar;
 }
+
+async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında yüzde koşuluna uyanları eleyip öyle tabları açıcaz.
+
+  var getMarketsUrl = 'https://www.coinexchange.io/api/v1/getmarkets'
+  var resultMarkets = await axios(getMarketsUrl);
+  var markets = resultMarkets.data.result.filter(e=> e.BaseCurrencyCode =="DOGE");
+  var summariesUrl = "https://www.coinexchange.io/api/v1/getmarketsummaries";
+
+  var resultSum = await axios(summariesUrl);
+  _marketOzetler = resultSum.data.result;
+
+  _userDbMarketler = markets.filter(e => {
+    var guncelMarket = _marketOzetler.find(mo => mo.MarketID == e.MarketID)
+    if(!guncelMarket){
+      return false
+    }
+    e.name = e.MarketAssetCode + "/" + e.BaseCurrencyCode;
+    e.tutar = 10000, e.yuzde = 10 , e.type = 'SA', e.userId = 5, e.status='A', e.marketId=e.MarketID, e.zararinaSat='D'
+
+    e.guncelMarket = guncelMarket
+    e.guncelYuzde = Math.round(((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100))
+    return guncelMarket.MarketID == e.MarketID
+  })
+
+  _kontroleUyanlar = _userDbMarketler.filter(e => {
+
+    if (_openOrders.includes(e.name)) { // Open ordersta bu market varsa direk al
+      return true
+    }
+
+   if (e.guncelMarket.Volume > 1000000) {
+    e.tutar = e.tutar * 1.9
+    e.yuzde = e.yuze * 0.3
+    } else if (e.guncelMarket.Volume > 200000) {
+      e.tutar = e.tutar * 1.4
+      e.yuzde = e.yuze * 0.7
+    } else if (e.guncelMarket.Volume > 100000) {
+      e.tutar = e.tutar
+      e.yuzde = e.yuzde * 0.7
+    } 
+    else {
+      return false
+    }
+    
+    return e.guncelYuzde >= Number(e.yuzde)
+  })
+
+  _kontroleUyanlar.sort((a, b) => b.guncelMarket.Volume - a.guncelMarket.Volume)
+  return _kontroleUyanlar;
+}
+
 
 async function GetMarkets() {
   if (!_isPaused) {// pause edilmemişse gir
     ButunSayfalariYenile()
-    var apiUrl = "http://keskinmedia.com/apim/markets/" + _userId; // kullanıcının marketlerini getirir.
-    var result = await axios(apiUrl);
-    // {"id":"1","userId":"1","name":"MAXI\/DOGE","tutar":"47527.25465058","type":"S","status":"A","reg_date":"2017-12-25 04:18:19"}
-
-    if (result.data) {
-      var markets = await KontroleUyan(result.data.markets);
+    if(_userId== 5 ){ // For doge
+      var markets = await KontroleUyanDoge()
       TabKontrol(markets);
-    } else {
-      console.log("Henüz Market yok");
+    }else{
+      var apiUrl = "http://keskinmedia.com/apim/markets/" + _userId; // kullanıcının marketlerini getirir.
+      var result = await axios(apiUrl);
+      // {"id":"1","userId":"1","name":"MAXI\/DOGE","tutar":"47527.25465058","type":"S","status":"A","reg_date":"2017-12-25 04:18:19"}
+
+      if (result.data) {
+        var markets = await KontroleUyan(result.data.markets);
+        TabKontrol(markets);
+      } else {
+        console.log("Henüz Market yok");
+      }
     }
   }
 }
@@ -356,10 +397,14 @@ function TradeHistoryKapatac() {
   chrome.tabs.query({
     url: "https://www.coinexchange.io/orders/page/*"
   }, function (tabs) {
-    for (const tab of tabs) {
-      chrome.tabs.remove(tab.id);
+    if(tabs.length==0){
+      yeniHistoryAc();
     }
-    yeniHistoryAc();
+
+    for (const tab of tabs) {
+      chrome.tabs.reload(tab.id);
+    }
+    
   });
 }
 
@@ -420,12 +465,7 @@ function GetMarketInfoFromUrl(url) {
   var type = GetParameterByName("type", url);
   var yuzde = GetParameterByName("yuzde", url);
 
-  return {
-    name,
-    tutar,
-    type,
-    yuzde
-  };
+  return {name,tutar,type,yuzde};
 }
 
 function GetParameterByName(name, url) {
