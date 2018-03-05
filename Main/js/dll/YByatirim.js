@@ -14,4 +14,4 @@ $.post("/ajax/system_investbox.php", params).done(data => {
     Background.js de listeyi güncel tutsun, yobit sayfası her güncellendiğinde bu liste kontrol edilsin.
     Artış olduğunda Sendsms fonksiyonu kullanılarak sms gönderilsin.
 
-*/
+*/ 
