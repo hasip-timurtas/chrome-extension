@@ -70,26 +70,20 @@ class InjectProd {
     */
 
    console.log("OneGecenVarmiKontrol");
-   var data = await getKacinci();
+   var data = await this.GetKacinci();
    console.log(data);
  
    // Buy varsa ama var olan buy alım satım farkı yüzdemizden küçükse iptal edilsin.
-   var alimSatimYuzdeFarki = Math.round((secilenMarket.AskPrice - secilenMarket.BidPrice) / secilenMarket.BidPrice * 100);
+   var alimSatimYuzdeFarki = Math.round((this.secilenMarket.AskPrice - this.secilenMarket.BidPrice) / this.secilenMarket.BidPrice * 100);
  
    if (data.buySirasi > 1) {
-     BuyIptalveRefresh()
+     this.BuyIptalveRefresh()
    }
- 
-   if (data.sellSirasi > _sellSirasi) {
-     SellIptalveUsteKoy()
-     return
-   }
- 
  
    if (data.sellSirasi > 1) {
-     var result = BuyFarkKontrolSellIcin(data.sellSirasi); // 0 değilse yeni fiyatı gir.
+     var result = this.BuyFarkKontrolSellIcin(data.sellSirasi); // 0 değilse yeni fiyatı gir.
      if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
-       SellIptalveRefresh();
+       this.SellIptalveRefresh();
      }
    }
   }
