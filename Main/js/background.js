@@ -308,8 +308,9 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     if(!guncelMarket){
       return false
     }
+    
     e.name = e.MarketAssetCode + "/" + e.BaseCurrencyCode;
-    e.tutar = 10000, e.yuzde = 10 , e.type = 'SA', e.userId = 5, e.status='A', e.marketId=e.MarketID, e.zararinaSat='D'
+    e.tutar = 10000, e.type = 'SA', e.userId = 5, e.status='A', e.marketId=e.MarketID, e.zararinaSat='D'
 
     e.guncelMarket = guncelMarket
     e.guncelYuzde = Math.round(((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100))
@@ -317,24 +318,29 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
   })
 
   _kontroleUyanlar = _userDbMarketler.filter(e => {
+    e.yuzde= 10
 
-    if (_openOrders.includes(e.name)) { // Open ordersta bu market varsa direk al
-      return true
-    }
-
-   if (e.guncelMarket.Volume > 1000000) {
-    e.tutar = e.tutar * 1.9
-    e.yuzde = e.yuze * 0.3
-    } else if (e.guncelMarket.Volume > 200000) {
+    if (e.guncelMarket.Volume >= 1000000) {
+      e.tutar = e.tutar * 1.9
+      e.yuzde = e.yuzde * 0.5
+    } else if (e.guncelMarket.Volume >= 200000) {
       e.tutar = e.tutar * 1.4
-      e.yuzde = e.yuze * 0.7
-    } else if (e.guncelMarket.Volume > 100000) {
+      e.yuzde = e.yuzde * 0.7
+    } else if (e.guncelMarket.Volume >= 100000) {
       e.tutar = e.tutar
       e.yuzde = e.yuzde * 0.7
+    } else if (e.guncelMarket.Volume >= 50000) {
+      e.tutar = e.tutar * 0.5
+      e.yuzde = e.yuzde
     } 
-    else {
-      return false
-    }
+
+   if (_openOrders.includes(e.name)) { // Open ordersta bu market varsa direk al
+      return true
+   }
+
+   if(e.guncelMarket.Volume < 50000){
+    return false
+   }
     
     return e.guncelYuzde >= Number(e.yuzde)
   })

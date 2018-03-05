@@ -17,32 +17,35 @@ class InjectProd {
     this.activeSell = $.grep(activeMarketOrders, e => e.direction == 'sell')
   }
 
-  AlimSatimKontrol() {
+  async AlimSatimKontrol() {
     const orderSellCount = user_sell_order_prices.length, orderBuyCount = user_buy_order_prices.length, tutar = Number(this.GetParameterByName('tutar')), type = this.GetParameterByName('type')
     const sellAmount = this.secilenMarket.BidPrice *  Number($('#primary-balance-clickable').html())
     const buyAmount = Number($('#secondary-balance-clickable').html()) // Sell ve Buy Amount
-    
+
+    await this.OneGecenVarmiKontrol()
+
     sellAmount > 0.0001 && orderSellCount > 0 ? this.SellIptalveRefresh() : this.sell() // 1. sell değeri varsa direk sat. ve Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
     buyAmount >= tutar && orderBuyCount < 1 && this.buy()  //2. bakiyemiz varsa ve aktif buy yoksa buy aç 
     //3. TYPE SADECE S İSE BUYU İPTAL EDER. SADECE B İSE SELLİ Yİ İPTAL EDER.
     type == 'S' && this.BuyIptalveRefresh()
     type == 'B' && this.SellIptalveRefresh()
-    this.OneGecenVarmiKontrol()
   }
     
   GetKacinci() {
     return new Promise(resolve => {
       $.get('/api/v1/getorderbook?market_id=' + $('#buy-form #market_id').val(), data => {
           this.marketOrderBook = data.result
-          var result = {buySirasi: 0,sellSirasi: 0}
+          var result = {buySirasi: 0, ikinciBuyPrice: 0, sellSirasi: 0, ikinciSellPrice: 0}
 
           if (user_buy_order_prices.length > 0)
             var secilenBuyPrice = $.grep(this.marketOrderBook.BuyOrders, e => Number(e.Price) == user_buy_order_prices[0])
             result.buySirasi = secilenBuyPrice && secilenBuyPrice.length > 0 && this.marketOrderBook.BuyOrders.indexOf(secilenBuyPrice[0]) + 1
+            result.ikinciBuyPrice = this.marketOrderBook.BuyOrders[1].Price
 
           if (user_sell_order_prices.length > 0)
             var secilenSellPrice = $.grep(this.marketOrderBook.SellOrders, e => Number(e.Price) == user_sell_order_prices[0])
             result.sellSirasi = secilenSellPrice && secilenSellPrice.length > 0 && this.marketOrderBook.SellOrders.indexOf(secilenSellPrice[0]) + 1
+            result.ikinciSellPrice = this.marketOrderBook.SellOrders[0].Price
 
           resolve(result)
         }
@@ -52,12 +55,15 @@ class InjectProd {
 
   async OneGecenVarmiKontrol() {
     var data = await this.GetKacinci()
-    data.buySirasi > 1 && this.BuyIptalveRefresh()
 
+    // Buy 1. sırada değilse veya. Buy 1. sıradaysa ve bir önceki buy ile arasında 1 satoshi fark yoksa buy boz ve iptal. Birdahakinde düzgün kuracaktır.
+    // Cancel buy veya Sell de bekleme yapılabilir bi 10 saniye felan, Bir sonraki değeri düzgün getirsin diye.
+    data.buySirasi > 1 || (data.buySirasi == 1 && user_buy_order_prices[0] - data.ikinciBuyPrice != 0.00000001) && await this.BuyIptalveRefresh("1 Satoshi fark buy boz refresh")
+    data.sellSirasi == 1 && data.ikinciSellPrice - user_sell_order_prices[0] != 0.00000001 && await this.SellIptalveRefresh("1 Satoshi fark SELL boz refresh")
     if (data.sellSirasi > 1) {
       var result = this.BuyFarkKontrolSellIcin(data.sellSirasi) // 0 değilse yeni fiyatı gir.
       if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
-        this.SellIptalveRefresh()
+        await this.SellIptalveRefresh()
       }
     }
   }
@@ -167,7 +173,7 @@ class InjectProd {
 
   BuyFarkKontrolSellIcin() {
     console.log('BuyFarkKontrolSellIcin')
-    var yuzde = 1
+    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 2  // 3 te 2 si fiyatına pazara koyacak.
     // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
     var zararinaSat = this.GetParameterByName('zararinaSat')
@@ -204,12 +210,12 @@ class InjectProd {
     } else {
       return {
         yuzde10Fark: false,
-        yeniUcret: aldigiFiyat + (aldigiFiyat / 100 * 1)
+        yeniUcret: aldigiFiyat + (aldigiFiyat / 100 * yuzde)
       }
     }
   }
 
-  BuyIptalveRefresh() {
+  async BuyIptalveRefresh() {
 
     if (this.activeBuy.length == 0) {
       return
@@ -223,13 +229,14 @@ class InjectProd {
       data: 'order_id=' + cancelOrderID,
       dataType: 'json',
       timeout: 5000,
-      success: function (data, status) {
+      success: async function (data, status) {
+        await this.sleep(20)
         window.location.reload()
       }
     })
   }
 
-  SellIptalveRefresh() {
+  async SellIptalveRefresh() {
     if (this.activeSell.length == 0) {
       return
     }
@@ -243,7 +250,8 @@ class InjectProd {
       data: 'order_id=' + cancelOrderID,
       dataType: 'json',
       timeout: 5000,
-      success: function (data, status) {
+      success: async function (data, status) {
+        await this.sleep(20)
         window.location.reload()
       }
     })
@@ -270,8 +278,7 @@ class InjectProd {
     var url = 'https://keskinmedia.com/apim/changeamount/' + marketId + '/' + toplam
 
 
-    $.get(
-      url,
+    $.get(url,
       function (data) {
         if (data.result == true) {
           console.log('Tutar güncellendi')
