@@ -85,11 +85,12 @@ var toplam = toplamTutar + balancem
   if (_userId && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
     if (tab.url.includes('market/') && tab.url.includes('?tutar')) {
       // Marketler İçin
+      /*
       chrome.tabs.executeScript(tabId, {
         code: "document.documentElement.style.display='none';",
         runAt: "document_start"
       });
-
+*/
       var marketId = GetParameterByName("marketId", tab.url)
       var guncelMarket = _marketOzetler.find(mo => mo.MarketID == Number(marketId))
       chrome.tabs.executeScript(tabId, {
@@ -126,7 +127,7 @@ var toplam = toplamTutar + balancem
         _login = false /// Login sayfasına girebilir.
       }
 
-      setTimeout(timeriBaslat, 1000 * 5);
+      setTimeout(timeriBaslat, 1000 * 15);
     }
   }
 });
@@ -392,6 +393,9 @@ async function TabKontrol(dbMarkets) {
   // https://www.coinexchange.io/market/SHND/DOGE?tutar=12345&type=S&yuzde=20
   TradeHistoryKapatac();
   await sleep(8)
+  if (_isPaused) {
+    return
+  }
   chrome.tabs.query({
     url: "https://www.coinexchange.io/market/*/*?*"
   }, function (tabs) {

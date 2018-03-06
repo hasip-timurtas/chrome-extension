@@ -22,70 +22,80 @@ class InjectProd {
     const sellAmount = this.secilenMarket.BidPrice *  Number($('#primary-balance-clickable').html())
     const buyAmount = Number($('#secondary-balance-clickable').html()) // Sell ve Buy Amount
 
-    sellAmount > 0.0001 && orderSellCount > 0 ? await this.SellIptalveRefresh() : await this.sell() // 1. sell değeri varsa direk sat. ve Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
-    buyAmount >= tutar && orderBuyCount < 1 && await this.buy()  //2. bakiyemiz varsa ve aktif buy yoksa buy aç 
-    //3. TYPE SADECE S İSE BUYU İPTAL EDER. SADECE B İSE SELLİ Yİ İPTAL EDER.
-    type == 'S' && await this.BuyIptalveRefresh()
-    type == 'B' && await this.SellIptalveRefresh()
+    // Returnların amacı her refresh te 1 tane işlem yapsın yoksa karışıyor.
+    if(type == 'S') {
+      return await this.BuyIptalveRefresh()
+    } 
+
+    if(type == 'B') {
+      return await this.SellIptalveRefresh()
+    } 
+
+    // 1. sell değeri varsa direk sat
+    if(sellAmount > 0.0001){
+     // Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
+      if(orderSellCount > 0){
+        return await this.SellIptalveRefresh()
+      } else {
+        return await this.sell()
+      }
+    }
+
+    //2. bakiyemiz varsa ve aktif buy yoksa buy aç 
+    if(buyAmount >= tutar && orderBuyCount < 1){
+      return await this.buy()
+    }
 
     await this.OneGecenVarmiKontrol()
   }
     
-  GetKacinci() {
-    return new Promise(resolve => {
-      $.get('/api/v1/getorderbook?market_id=' + $('#buy-form #market_id').val(), data => {
-          this.marketOrderBook = data.result
-          var result = {buySirasi: 0, ikinciBuyPrice: 0, sellSirasi: 0, ikinciSellPrice: 0}
+  async GetKacinci() {
+    var marketId = $('#buy-form #market_id').val()
+    var data = await $.get('/api/v1/getorderbook?market_id=' + marketId).then()
+    this.marketOrderBook = data.result
+    var result = {buySirasi: 0, ikinciBuyPrice: 0, sellSirasi: 0, ikinciSellPrice: 0}
 
-          if (user_buy_order_prices.length > 0)
-            var secilenBuyPrice = $.grep(this.marketOrderBook.BuyOrders, e => Number(e.Price) == user_buy_order_prices[0])
-            result.buySirasi = secilenBuyPrice && secilenBuyPrice.length > 0 && this.marketOrderBook.BuyOrders.indexOf(secilenBuyPrice[0]) + 1
-            result.ikinciBuyPrice = this.marketOrderBook.BuyOrders[1].Price
+    if (user_buy_order_prices.length > 0)
+      var secilenBuyPrice = $.grep(this.marketOrderBook.BuyOrders, e => Number(e.Price) == user_buy_order_prices[0])
+      result.buySirasi = secilenBuyPrice && secilenBuyPrice.length > 0 && this.marketOrderBook.BuyOrders.indexOf(secilenBuyPrice[0]) + 1
+      result.ikinciBuyPrice = this.marketOrderBook.BuyOrders[1].Price
 
-          if (user_sell_order_prices.length > 0)
-            var secilenSellPrice = $.grep(this.marketOrderBook.SellOrders, e => Number(e.Price) == user_sell_order_prices[0])
-            result.sellSirasi = secilenSellPrice && secilenSellPrice.length > 0 && this.marketOrderBook.SellOrders.indexOf(secilenSellPrice[0]) + 1
-            result.ikinciSellPrice = this.marketOrderBook.SellOrders[0].Price
+    if (user_sell_order_prices.length > 0)
+      var secilenSellPrice = $.grep(this.marketOrderBook.SellOrders, e => Number(e.Price) == user_sell_order_prices[0])
+      result.sellSirasi = secilenSellPrice && secilenSellPrice.length > 0 && this.marketOrderBook.SellOrders.indexOf(secilenSellPrice[0]) + 1
+      result.ikinciSellPrice = this.marketOrderBook.SellOrders[0].Price
 
-          resolve(result)
-        }
-      )
-    })
+    return result
   }
 
   async OneGecenVarmiKontrol() {
-    /*
+    console.log("Öne geçen varmı kontrol")
     var data = await this.GetKacinci()
 
-    // Buy 1. sırada değilse veya. Buy 1. sıradaysa ve bir önceki buy ile arasında 1 satoshi fark yoksa buy boz ve iptal. Birdahakinde düzgün kuracaktır.
-    // Cancel buy veya Sell de bekleme yapılabilir bi 10 saniye felan, Bir sonraki değeri düzgün getirsin diye.
-    data.buySirasi > 1 || (data.buySirasi == 1 && user_buy_order_prices[0] - data.ikinciBuyPrice != 0.00000001) && await this.BuyIptalveRefresh("1 Satoshi fark buy boz refresh")
-    data.sellSirasi == 1 && data.ikinciSellPrice - user_sell_order_prices[0] != 0.00000001 && await this.SellIptalveRefresh("1 Satoshi fark SELL boz refresh")
+    /*
+    var buyBirSatoshiFark = data.buySirasi == 1 && user_buy_order_prices[0] - data.ikinciBuyPrice != 0.00000001
+    var sellBirSatoshiFark = data.sellSirasi == 1 && data.ikinciSellPrice - user_sell_order_prices[0] != 0.00000001
+
+    
+    if (data.buySirasi > 1 || buyBirSatoshiFark) {
+      this.BuyIptalveRefresh()
+    }
+
+    if (sellBirSatoshiFark) {
+      this.SellIptalveRefresh()
+    }
+  */
+
+    if (data.buySirasi > 1) {
+     return this.BuyIptalveRefresh()
+    }
+
     if (data.sellSirasi > 1) {
       var result = this.BuyFarkKontrolSellIcin(data.sellSirasi) // 0 değilse yeni fiyatı gir.
       if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
         await this.SellIptalveRefresh()
       }
     }
-    */
-
-   console.log("OneGecenVarmiKontrol");
-   var data = await this.GetKacinci();
-   console.log(data);
- 
-   // Buy varsa ama var olan buy alım satım farkı yüzdemizden küçükse iptal edilsin.
-   var alimSatimYuzdeFarki = Math.round((this.secilenMarket.AskPrice - this.secilenMarket.BidPrice) / this.secilenMarket.BidPrice * 100);
- 
-   if (data.buySirasi > 1) {
-     this.BuyIptalveRefresh()
-   }
- 
-   if (data.sellSirasi > 1) {
-     var result = this.BuyFarkKontrolSellIcin(data.sellSirasi); // 0 değilse yeni fiyatı gir.
-     if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
-       this.SellIptalveRefresh();
-     }
-   }
   }
 
   OrantiliBuyAlKontrolu() {
@@ -243,6 +253,13 @@ class InjectProd {
 
     console.log('BuyIptalveRefresh')
     var cancelOrderID = this.activeBuy[0].order_id
+    // Burda buy iptal edip refresh ediyorduk. Sistem zaten refresh ediyor o yüzden sadece iptal ediyoruz.
+    var result = await $.post(Routing.generate('deleteorder'), {order_id : cancelOrderID}).then()
+    await this.sleep(5)
+    window.location.reload()
+     /*
+    await this.sleep(20)
+    window.location.reload()
     $.ajax({
       type: 'POST',
       url: Routing.generate('deleteorder'),
@@ -254,6 +271,7 @@ class InjectProd {
         window.location.reload()
       }
     })
+    */
   }
 
   async SellIptalveRefresh() {
@@ -263,7 +281,13 @@ class InjectProd {
 
     console.log('SellIptalveRefresh')
     var cancelOrderID = this.activeSell[0].order_id
-
+    // Burda buy iptal edip refresh ediyorduk. Sistem zaten refresh ediyor o yüzden sadece iptal ediyoruz.
+    var result = await $.post(Routing.generate('deleteorder'), {order_id : cancelOrderID}).then()
+    await this.sleep(5)
+    window.location.reload()
+    /*
+    await this.sleep(20)
+    window.location.reload()
     $.ajax({
       type: 'POST',
       url: Routing.generate('deleteorder'),
@@ -275,6 +299,7 @@ class InjectProd {
         window.location.reload()
       }
     })
+    */
   }
 
   DbGuncelle() {
@@ -308,7 +333,6 @@ class InjectProd {
   }
 
   InputPriceKeyUpBuy() {
-    console.log('InputPriceKeyUpBuy')
     var b_price = $('#buy-form #inputPrice').val()
     var b_amount = $('#buy-form #inputAmount').val()
     var b_total = $('#buy-form #inputTotal').val()
@@ -332,7 +356,6 @@ class InjectProd {
   }
 
   InputPriceKeyUpSell() {
-    console.log('InputPriceKeyUpSell')
     var s_price = $('#sell-form #inputPrice').val()
     var s_amount = $('#sell-form #inputAmount').val()
     var s_total = $('#sell-form #inputTotal').val()
@@ -356,7 +379,6 @@ class InjectProd {
   }
 
   GetParameterByName(name) {
-    console.log('GetParameterByName')
     var url = document.URL
     name = name.replace(/[\[\]]/g, '\\$&')
     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
