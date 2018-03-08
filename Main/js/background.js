@@ -1,5 +1,5 @@
 var _access_token = "8f03c10593f0abadef0b3084ba560826";
-var _sayacSuresi = 30;
+var _sayacSuresi = 60;
 var _isPaused = false
 
 var secilenMarket;
@@ -85,12 +85,12 @@ var toplam = toplamTutar + balancem
   if (_userId && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
     if (tab.url.includes('market/') && tab.url.includes('?tutar')) {
       // Marketler İçin
-      /*
+      
       chrome.tabs.executeScript(tabId, {
         code: "document.documentElement.style.display='none';",
         runAt: "document_start"
       });
-*/
+
       var marketId = GetParameterByName("marketId", tab.url)
       var guncelMarket = _marketOzetler.find(mo => mo.MarketID == Number(marketId))
       chrome.tabs.executeScript(tabId, {
@@ -271,8 +271,20 @@ async function LoginCheck() {
 async function KontroleUyan(markets) { // DB dekileri çektik bunların arasında yüzde koşuluna uyanları eleyip öyle tabları açıcaz.
 
   var summariesUrl = "https://www.coinexchange.io/api/v1/getmarketsummaries";
+  var resultSum = null
 
-  var resultSum = await axios(summariesUrl);
+  try {
+    resultSum = await axios(summariesUrl);
+  } catch (error) {
+    console.log('getmarketsummaries hatası verdi. Satır: 280. Tarih : %s ', Date())
+    console.log('Hata : %s', error )
+    UygulamayiDurdur()
+    ButunSayfalariKapat()
+    await sleep(2000)
+    UygulamayiBaslat()
+    return KontroleUyan(markets)
+  }
+
   _marketOzetler = resultSum.data.result;
 
   var kontroleUyanlar = markets.filter(e => {
@@ -297,7 +309,21 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
 async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında yüzde koşuluna uyanları eleyip öyle tabları açıcaz.
 
   var getMarketsUrl = 'https://www.coinexchange.io/api/v1/getmarkets'
-  var resultMarkets = await axios(getMarketsUrl);
+  var resultMarkets
+
+  try {
+    resultMarkets = await axios(getMarketsUrl);
+  } catch (error) {
+    console.log('getmarkets hatası verdi. Satır: 280. Tarih : %s ', Date())
+    console.log('Hata : %s', error )
+    UygulamayiDurdur()
+    ButunSayfalariKapat()
+    await sleep(2000)
+    UygulamayiBaslat()
+    return KontroleUyanDoge(markets)
+  }
+
+
   var markets = resultMarkets.data.result.filter(e=> e.BaseCurrencyCode =="DOGE");
   var summariesUrl = "https://www.coinexchange.io/api/v1/getmarketsummaries";
 
@@ -322,10 +348,10 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     e.yuzde= 10
 
     if (e.guncelMarket.Volume >= 1000000) {
-      e.tutar = e.tutar * 1.9
+      e.tutar = e.tutar * 1.5
       e.yuzde = e.yuzde * 0.5
     } else if (e.guncelMarket.Volume >= 200000) {
-      e.tutar = e.tutar * 1.4
+      e.tutar = e.tutar * 1.1
       e.yuzde = e.yuzde * 0.7
     } else if (e.guncelMarket.Volume >= 100000) {
       e.tutar = e.tutar
@@ -386,6 +412,15 @@ async function SayfalariYenile(tabs) {
     await sleep(2) // 1 ila 20 saniye arasında bekler 
     chrome.tabs.reload(tab.id);
   }
+}
+
+function ButunSayfalariKapat() {
+  chrome.tabs.query({
+    url: "https://www.coinexchange.io/*"
+  }, function (tabs) {
+	  var tabIds = tabs.map(e=> e.id)
+      chrome.tabs.remove(tabIds)
+  });
 }
 
 
