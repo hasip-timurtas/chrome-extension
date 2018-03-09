@@ -22,7 +22,7 @@ const fillAndSubmit = () => {
 function Login() {
     $('#remember_me').prop('checked', true);
     //  setTimeout('RobotBasla()', 1000 * 1); // 1 Saniye sonra ben robot değilime tıkla.
-    setTimeout('$("#_submit").click();', 1000 * 5);// 5 saniye sonra login butonuna bas 
+    //setTimeout('$("#_submit").click();', 1000 * 5);// 5 saniye sonra login butonuna bas 
 }
 
 if ($("a:contains('My Account')").length == 0) { // Eğer zaten login olmamışsa
