@@ -2,19 +2,24 @@ var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&column
 var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
 var _access_token = "8f03c10593f0abadef0b3084ba560826", investBoxUrl = "/ajax/system_investbox.php"
 
-const SendSms = async (number) => {
+const SendInvestBoxNumber = async (number) => {
     //  http://keskinmedia.com/apim/sendlogout/2/8f03c10593f0abadef0b3084ba560826
     var userId = $("body").attr("datam"); 
-    var sendSmsUrl = `http://keskinmedia.com/apim/sendlogout/${userId}/${number}/${_access_token}`;
+    var sendSmsUrl = `https://keskinmedia.com/apim/sendInvest/${userId}/${number}/${_access_token}`;
     $.get(sendSmsUrl).done(data=> {
         console.log(data)
+        /*
+            setTimeout(() => {
+                window.location.reload()
+            }, 1000*60);
+        */
     });
 }
 
 $.post(investBoxUrl, params).done(data => {
     var result = JSON.parse(data);
     console.log('Invests Total: ' + result.recordsTotal)
-    SendSms(result.recordsTotal)
+    SendInvestBoxNumber(result.recordsTotal)
 })
 
 

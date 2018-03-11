@@ -414,6 +414,7 @@ function ButunSayfalariKapat() {
 async function TabKontrol(dbMarkets) {
   // https://www.coinexchange.io/market/SHND/DOGE?tutar=12345&type=S&yuzde=20
   TradeHistoryKapatac();
+  YobitInvestBoxKapatAc();
   await sleep(8)
   if (_isPaused) {
     return
@@ -424,6 +425,28 @@ async function TabKontrol(dbMarkets) {
     TabiDbdekilerdeArat(tabs, dbMarkets);
     DbdekileriTabdaArat(dbMarkets, tabs)
   });
+}
+
+function YobitInvestBoxKapatAc() {
+    const yeniHistoryAc = () => {
+      chrome.tabs.create({
+        active: false,
+        url: `https://yobit.io/en/investbox/`
+      });
+    }
+  
+    chrome.tabs.query({
+      url: "https://yobit.io/en/investbox/"
+    }, function (tabs) {
+      if(tabs.length==0){
+        yeniHistoryAc();
+      }
+  
+      for (const tab of tabs) {
+        chrome.tabs.reload(tab.id);
+      }
+      
+    });
 }
 
 function TradeHistoryKapatac() {
