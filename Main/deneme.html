@@ -940,54 +940,54 @@
 
 <script>
 
-                            var sp_ws = new WebSocket("wss://wss.coinexchange.io:3001/sideprices");
+             var sp_ws = new WebSocket("wss://wss.coinexchange.io:3001/sideprices");
 
              sp_ws.onopen = function (event) {
-             sp_ws.onmessage = function(evt) {
-                var data = JSON.parse(evt.data);
+                sp_ws.onmessage = function(evt) {
+                    var data = JSON.parse(evt.data);
+                    console.log(data);
+                    var thediv = 'side_prices_'+data.market_id;
+                    var last_price = $('#'+thediv+' #price').text();
+                    var last_volume = $('#'+thediv+' #volume').text();
 
-                var thediv = 'side_prices_'+data.market_id;
-                var last_price = $('#'+thediv+' #price').text();
-                var last_volume = $('#'+thediv+' #volume').text();
+                                        if(last_price < data.price){
+                            $('#'+thediv).animate( { backgroundColor: "#5cb85c" }, 1 ).animate( { backgroundColor: "#ffffff" }, 3000 );
+                        }
+                        if(last_price > data.price){
+                        $('#'+thediv).animate( { backgroundColor: "#d9534f" }, 1 ).animate( { backgroundColor: "#ffffff" }, 3000 );
+                        }
+                        if(last_price == data.price && last_volume != Number(data.volume).toFixed(3)){
+                            $('#'+thediv).animate( { backgroundColor: "#7cb5ec" }, 1 ).animate( { backgroundColor: "#ffffff" }, 3000 );
+                        }
+                                    $('#'+thediv+' #price').html(data.price);
 
-                                    if(last_price < data.price){
-                        $('#'+thediv).animate( { backgroundColor: "#5cb85c" }, 1 ).animate( { backgroundColor: "#ffffff" }, 3000 );
+
+
+
+                    var volume = data.volume;;
+                    if(volume < 0.001){
+                        volume = "< 0.001";
+                    } else if (volume === 0){
+                        volume = "-";
+                    } else {
+                        volume = Number(volume).toFixed(3);
                     }
-                    if(last_price > data.price){
-                       $('#'+thediv).animate( { backgroundColor: "#d9534f" }, 1 ).animate( { backgroundColor: "#ffffff" }, 3000 );
+                    $('#'+thediv+' #volume').html(volume);
+
+
+                    if(data.perc_change >= 0){
+                        $('#'+thediv+' #change').removeClass("red").addClass("green");
+                    } else {
+                        $('#'+thediv+' #change').removeClass("green").addClass("red");
                     }
-                    if(last_price == data.price && last_volume != Number(data.volume).toFixed(3)){
-                        $('#'+thediv).animate( { backgroundColor: "#7cb5ec" }, 1 ).animate( { backgroundColor: "#ffffff" }, 3000 );
-                    }
-                                $('#'+thediv+' #price').html(data.price);
+                    $('#'+thediv+' #change').html(data.perc_change+"%");
+                };
 
-
-
-
-                var volume = data.volume;;
-                if(volume < 0.001){
-                    volume = "< 0.001";
-                } else if (volume === 0){
-                    volume = "-";
-                } else {
-                    volume = Number(volume).toFixed(3);
+                function tableFilter(){
+                    $('.side-price-table').filterTable({
+                        filterExpression: 'filterTableFindAny'
+                    });
                 }
-                $('#'+thediv+' #volume').html(volume);
-
-
-                if(data.perc_change >= 0){
-                    $('#'+thediv+' #change').removeClass("red").addClass("green");
-                } else {
-                    $('#'+thediv+' #change').removeClass("green").addClass("red");
-                }
-                $('#'+thediv+' #change').html(data.perc_change+"%");
-            };
-
-            function tableFilter(){
-                $('.side-price-table').filterTable({
-                     filterExpression: 'filterTableFindAny'
-                });
-            }
 
         };
 
@@ -10164,44 +10164,48 @@
         // END General
 
         // Market Websockets Configuration
-                    var md_ws = new WebSocket("wss://wss.coinexchange.io:3001/marketdata");
-            var bal_ws =  new WebSocket("wss://wss.coinexchange.io:3001/balancedata");
-
-
-
 
 
 
                     var ws_auth_token = '/KVhNMJc0ZbLpYfE5hcNHN+F2qC5/Rkal9XqBcY4Q';
-            var ws_general_token = 'p3quznzN1ughoZbm+goiC22vbBjh9peBAMS15q3QT';
-                md_ws.onopen = function (event) {
-            var market_id = '21';
-            var json_send = '{ "type": "join_channel", "market_id": "'+market_id+'", "ws_auth_token":"'+ws_auth_token+'" }';
-            md_ws.send(json_send);
-            $('.ws-status-icon').html('<img src="/assets/images/connected.png" title="Websockets Status = connected" />');
-        }
-
-
-
-
+           
+        var ws_general_token = 'JlcWEtZgK2+dt+7xBmQxgzDKz+2Js5QRjMIA64eUP';
+        var bal_ws =  new WebSocket("wss://wss.coinexchange.io:3001/balancedata");
         bal_ws.onopen = function (event) {
             var json_send = '{ "type": "join_balance_channel", "ws_general_token":"'+ws_general_token+'" }';
             bal_ws.send(json_send);
             $('.ws-status-icon').html('<img src="/assets/images/connected.png" title="Websockets Status = connected" />');
         }
 
-        md_ws.onclose = function(evt){
+        bal_ws.onclose = function(evt){
             $('.ws-status-icon').html('<img src="/assets/images/disconnected.png" title="Websockets Status = connection lost, try reloading page." />');
         }
-        bal_ws.onclose = function(evt){
+
+         bal_ws.onmessage = function(evt) {
+            var data = JSON.parse(evt.data);
+            console.log(data)
+            if(data.type == "balance_update"){
+                updateBalance(data.currency_id, data.balance);
+            }
+        };
+
+        var md_ws = new WebSocket("wss://wss.coinexchange.io:3001/marketdata");
+        md_ws.onopen = function (event) {
+            var market_id = '21';
+            var json_send = '{ "type": "join_channel", "market_id": "'+market_id+'", "ws_auth_token":"'+ws_auth_token+'" }';
+            md_ws.send(json_send);
+            $('.ws-status-icon').html('<img src="/assets/images/connected.png" title="Websockets Status = connected" />');
+        }        
+        
+        md_ws.onclose = function(evt){
             $('.ws-status-icon').html('<img src="/assets/images/disconnected.png" title="Websockets Status = connection lost, try reloading page." />');
         }
 
         md_ws.onmessage = function(evt) {
 
             var data = JSON.parse(evt.data);
-
-
+            
+            console.log(evt)
 
             // Sell Orders Update
             if(data.type == "update_sell_order"){
@@ -10259,12 +10263,7 @@
             }
         };
 
-        bal_ws.onmessage = function(evt) {
-            var data = JSON.parse(evt.data);
-            if(data.type == "balance_update"){
-                updateBalance(data.currency_id, data.balance);
-            }
-        };
+       
 
         function updateBalance(currency_id, balance){
             //

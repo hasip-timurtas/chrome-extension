@@ -2,26 +2,44 @@ var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&column
 var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
 var _access_token = "8f03c10593f0abadef0b3084ba560826", investBoxUrl = "/ajax/system_investbox.php"
 
-const SendInvestBoxNumber = async (number) => {
-    //  http://keskinmedia.com/apim/sendlogout/2/8f03c10593f0abadef0b3084ba560826
-    var userId = $("body").attr("datam"); 
-    var sendSmsUrl = `https://keskinmedia.com/apim/sendInvest/${userId}/${number}/${_access_token}`;
-    $.get(sendSmsUrl).done(data=> {
-        console.log(data)
-        /*
-            setTimeout(() => {
-                window.location.reload()
-            }, 1000*60);
-        */
-    });
-}
-
+var investCoinler = []
 $.post(investBoxUrl, params).done(data => {
     var result = JSON.parse(data);
-    console.log('Invests Total: ' + result.recordsTotal)
-    SendInvestBoxNumber(result.recordsTotal)
+    //SendInvestBoxNumber(result.recordsFiltered)
+    Basla(result.recordsFiltered)
 })
 
+async function Basla(sayfa){
+    for(var i =0; i < sayfa; i++){
+        await InvestCoinTopla()
+        $( "#investbox_boxes_list_next" ).click()
+    }
+    SendInvestBoxNumber()
+    console.log(investCoinler.join(','))
+}
+
+function InvestCoinTopla(){
+    // Her sayfayı tek tek gezerek o sayfadaki coinlerin adını alır.
+    $("#investbox_boxes_list tbody tr span").each(function() {
+        var coinName = $(this).children().html()
+        if(!investCoinler.includes(coinName)){
+            investCoinler.push(coinName)
+        }
+    })
+}
+
+async function SendInvestBoxNumber() {
+    var userId = $("body").attr("datam");
+    var sendSmsUrl = `https://keskinmedia.com/apim/sendInvest/${userId}/${investCoinler}/${_access_token},`;
+
+    $.get(sendSmsUrl).done(result => {
+        console.log(result);
+    })
+}
+
+function sleep(saniye) {
+    return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
+}
 
 
 

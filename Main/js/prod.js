@@ -163,7 +163,6 @@ async function GetCoinExchangeMarkets() {
       market.MarketAssetCode + " / " + market.BaseCurrencyCode +
       "</td> <td style='color:#5cb85c'>" + mar.BidPrice + " </td> <td style='color:red;'>" + mar.AskPrice + "</td> <td style='color:black;'> " + fark + "</td> <td style='color:brown;'>" + mar.Volume + "</td>" +
       "<td style='color:black'>" + mar.TradeCount + "</td></tr>";
-
   }
 
 

@@ -24,20 +24,24 @@ class InjectProd {
 
     // Returnların amacı her refresh te 1 tane işlem yapsın yoksa karışıyor.
     if(type == 'S') {
-      return await this.BuyIptalveRefresh()
+      await this.BuyIptalveRefresh()
+      return
     } 
 
     if(type == 'B') {
-      return await this.SellIptalveRefresh()
+      await this.SellIptalveRefresh()
+      return
     } 
 
     // 1. sell değeri varsa direk sat
     if(sellAmount > 0.0001){
      // Eğer sell amount 0dan büyük se ve aktif işlem varsa yeni satım yapılmış demek. onuda ekle
       if(orderSellCount > 0){
-        return await this.SellIptalveRefresh()
+        await this.SellIptalveRefresh()
+        return
       } else {
-        return await this.sell()
+         await this.sell()
+        return
       }
     }
 
