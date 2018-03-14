@@ -165,6 +165,29 @@ $(document).ready(function() {
     });
 });
 
+async function LoginCheck() {
+    var userName = $("#name").val();
+    var pass = $("#pass").val();
+    var data = userName + "/" + pass;
+    var apiUrl = "http://keskinmedia.com/apim/user/";
+
+    var tamUrl = apiUrl + data; // Örnek http://keskinmedia.com/coin/user/hasip/123456
+
+    var result = await axios(tamUrl);
+    if (result.data) {
+        $("#loginArea").hide();
+        $("#sonuclar").show();
+        $("#sayac").show();
+        $("#loginName").html(userName);
+        _userId = result.data.id;
+        if (_userId) {
+            Basla();
+        } else {
+            // Eğer test ise bütün uygun coinleri gir. DB de olmayanları.
+        }
+    }
+}
+
 function SayaciAktifEt() {
   _guncelSayacSuresi = _sayacSuresi;
     setInterval(function() {
@@ -207,25 +230,24 @@ function Basla() {
     _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
 }
 
-async function LoginCheck() {
-    var userName = $("#name").val();
-    var pass = $("#pass").val();
-    var data = userName + "/" + pass;
-    var apiUrl = "http://keskinmedia.com/apim/user/";
-
-    var tamUrl = apiUrl + data; // Örnek http://keskinmedia.com/coin/user/hasip/123456
-
-    var result = await axios(tamUrl);
-    if (result.data) {
-        $("#loginArea").hide();
-        $("#sonuclar").show();
-        $("#sayac").show();
-        $("#loginName").html(userName);
-        _userId = result.data.id;
-        if (_userId) {
-            Basla();
+async function GetMarkets() {
+    if (!_isPaused) { // pause edilmemişse gir
+        ButunSayfalariYenile()
+        if (_userId == 5) { // For doge
+            var markets = await KontroleUyanDoge();
+            jqueryIleSayfaYuklet(markets)
+           // TabKontrol(markets);
         } else {
-            // Eğer test ise bütün uygun coinleri gir. DB de olmayanları.
+            var apiUrl = "http://keskinmedia.com/apim/markets/" + _userId; // kullanıcının marketlerini getirir.
+            var result = await axios(apiUrl);
+            // {"id":"1","userId":"1","name":"MAXI\/DOGE","tutar":"47527.25465058","type":"S","status":"A","reg_date":"2017-12-25 04:18:19"}
+
+            if (result.data) {
+                var markets = await KontroleUyan(result.data.markets);
+                TabKontrol(markets);
+            } else {
+                console.log("Henüz Market yok");
+            }
         }
     }
 }
@@ -373,28 +395,6 @@ async function LoadBalancesAndOrders(){
   } catch (error) {
     console.log('Orders Hata verdi, eski order ile devam edecek.')
   }
-}
-
-async function GetMarkets() {
-    if (!_isPaused) { // pause edilmemişse gir
-        ButunSayfalariYenile()
-        if (_userId == 5) { // For doge
-            var markets = await KontroleUyanDoge();
-            jqueryIleSayfaYuklet(markets)
-           // TabKontrol(markets);
-        } else {
-            var apiUrl = "http://keskinmedia.com/apim/markets/" + _userId; // kullanıcının marketlerini getirir.
-            var result = await axios(apiUrl);
-            // {"id":"1","userId":"1","name":"MAXI\/DOGE","tutar":"47527.25465058","type":"S","status":"A","reg_date":"2017-12-25 04:18:19"}
-
-            if (result.data) {
-                var markets = await KontroleUyan(result.data.markets);
-                TabKontrol(markets);
-            } else {
-                console.log("Henüz Market yok");
-            }
-        }
-    }
 }
 
 async function jqueryIleSayfaYuklet(markets){
