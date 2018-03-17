@@ -1,5 +1,5 @@
 var _access_token = "8f03c10593f0abadef0b3084ba560826";
-var _sayacSuresi = 60;
+var _sayacSuresi = 1000;
 var _marketSuresi = 5 // Açtığı her market için bekleme süresi.
 var _guncelSayacSuresi
 var _anaSayac
@@ -14,9 +14,10 @@ const chromep = new ChromePromise();
 var _appId = chrome.runtime.id;
 var _marketOzetler = []
 var _kontroleUyanlar = []
+var _getMarkets = []
 var _userDbMarketler = []
 var _Balances = []
-
+var _debug = false
 function UygulamayiBaslat() {
     _isPaused = false
 }
@@ -27,9 +28,9 @@ function UygulamayiDurdur() {
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     if (tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
-        if (_userId && tab.url.includes("/investbox")) {
+        if (tab.url.includes("/investbox")) {
             chrome.tabs.executeScript(tabId, {
-                code: `var datam = '${_userId}'; $("body").attr("datam",datam); var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
+                code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
                 runAt: "document_end"
             });
         }
@@ -59,7 +60,22 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
         }
     }
 
-    if (_userId && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
+    if (tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {  
+        if (tab.url.includes("/balances")) {
+            var openOrdersTutar = await LoadOpenOrders()
+            
+          chrome.tabs.executeScript(tabId, {
+            code: `var toplamTutar = ${openOrdersTutar};
+    var balancem = Number($("td:contains('Dogecoin')")[0].parentElement.children[2].innerText);
+    var aciklama = $("h3:contains('Account Balances:')").html();
+    var toplam = toplamTutar + balancem
+            $("h3:contains('Account Balances:')").html(aciklama + "<br> balance: " + balancem + "<br>order tutar: " + toplamTutar+"<br> Toplam: "+toplam)`,
+            runAt: "document_end"
+          });
+        }
+      }
+
+    if (_userId && !_debug && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
         if (tab.url.includes('market/') && tab.url.includes('?tutar')) {
             // Marketler İçin
 
@@ -86,6 +102,13 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
                 _login = true // login sayfasına 1 defa gitmesi yeterli.
                 LogoutBildir();
             }
+        }
+
+        if (tab.url.includes("/orders")) {
+            chrome.tabs.executeScript(tabId, {
+                code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/orders.js?v='+ Math.random(); document.head.appendChild(i);",
+                runAt: "document_end"
+            });
         }
 
         if (tab.url.includes("noreload")) {
@@ -138,20 +161,27 @@ async function LogoutBildir() {
 }
 
 $(document).ready(function() {
+
+    const direkLogin = (userId, UserName)=>{
+        $("#loginArea").hide();
+        $("#sonuclar").show();
+        $("#sayac").show();
+        $("#loginName").html(UserName);
+        _userId = userId
+        Basla();
+    }
+
     $("body").load('https://keskinmedia.com/api/background.php', function(data) {
         var user = window.location.search.split('?')[1];
         if (user == "-k") {
-            $("#name").val("kari");
-            $("#pass").val("12345");
-            LoginCheck();
+            direkLogin(5, 'karita')
+        } else if (user == "-kd") { // Karina Debug debug aktif edilir. -> Burada sadece kaytları getirir uygulamayı başlatmaz. ve lazım olan sayfaları açmaz.
+            _debug = true;
+            direkLogin(5, 'karita')
         } else if (user == "h") {
-            $("#name").val("hasip");
-            $("#pass").val("123456");
-            LoginCheck();
+            direkLogin(2, 'hasip')
         } else if (user == "m") {
-            $("#name").val("musa");
-            $("#pass").val("12345678");
-            LoginCheck();
+            direkLogin(3, 'musa')
         }
 
         $("#btnLogin").click(function() {
@@ -219,23 +249,50 @@ function HataliSayfalariYenile() {
         hataliSayfalar.forEach(tab => {
             chrome.tabs.reload(tab.id);
         });
-
     });
 }
 
-function Basla() {
+async function Basla() {
+    await LoadMarkets();
     GetMarkets(); // With UserName
-    SayaciAktifEt();
-    HataliSayfaKontrolSayaci();
-    _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
+
+    if(!_debug){ // Debug modda değilse aşağıdaki fonksiyonları çağır
+        SayaciAktifEt();
+        //HataliSayfaKontrolSayaci();
+        _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
+        LazimOlanSayfalariAc();
+    }
+}
+
+async function LoadMarkets(){
+    var summariesUrl = "https://www.coinexchange.io/api/v1/getmarketsummaries";
+    var resultSum
+
+    try {
+        resultSum = await axios(summariesUrl);
+    } catch (error) {
+        console.log('getmarketsummaries hatası verdi. Satır: 280. Tarih : %s ', Date())
+        console.log('Hata : %s', error)
+        UygulamayiDurdur()
+        ButunSayfalariKapat()
+        await sleep(2000)
+        UygulamayiBaslat()
+        return KontroleUyan(markets)
+    }
+
+    _marketOzetler = resultSum.data.result;
+    var getMarketsUrl = 'https://www.coinexchange.io/api/v1/getmarkets'
+    _getMarkets = await axios(getMarketsUrl);
 }
 
 async function GetMarkets() {
     if (!_isPaused) { // pause edilmemişse gir
         ButunSayfalariYenile()
         if (_userId == 5) { // For doge
-            var markets = await KontroleUyanDoge();
-            jqueryIleSayfaYuklet(markets)
+            await KontroleUyanDoge();
+            if(_debug)
+                return 
+            jqueryIleSayfaYuklet()
            // TabKontrol(markets);
         } else {
             var apiUrl = "http://keskinmedia.com/apim/markets/" + _userId; // kullanıcının marketlerini getirir.
@@ -291,30 +348,10 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
 }
 
 async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında yüzde koşuluna uyanları eleyip öyle tabları açıcaz.
-
-    var getMarketsUrl = 'https://www.coinexchange.io/api/v1/getmarkets'
-    var resultMarkets
-    var resultMarkets 
-
-    try {
-      resultMarkets = await axios(getMarketsUrl);
-    } catch (error) {
-      console.log('getmarkets hatası verdi. Satır: 280. Tarih : %s ', Date())
-      console.log('Hata : %s', error )
-      UygulamayiDurdur()
-      ButunSayfalariKapat()
-      await sleep(2000)
-      UygulamayiBaslat()
-      return KontroleUyanDoge(markets)
-    }
-
-    var markets = resultMarkets.data.result.filter(e => e.BaseCurrencyCode == "DOGE");
-    var summariesUrl = "https://www.coinexchange.io/api/v1/getmarketsummaries";
-    var resultSum = await axios(summariesUrl);
-    _marketOzetler = resultSum.data.result;
-
     await LoadBalancesAndOrders()
     var openOrderlerim = _openOrders.map(e=> e.marketName);
+
+    var markets = _getMarkets.data.result.filter(e => e.BaseCurrencyCode == "DOGE");
     _userDbMarketler = markets.filter(e => {
         var guncelMarket = _marketOzetler.find(mo => mo.MarketID == e.MarketID)
         if (!guncelMarket) {
@@ -330,7 +367,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     })
 
     _kontroleUyanlar = _userDbMarketler.filter(e => {
-        e.yuzde = 10
+        e.yuzde = 30
         e.amount = _Balances.find(b=> b.symbol == e.name.split('/')[0]) || 0
         if (e.guncelMarket.Volume >= 1000000) {
             e.tutar = e.tutar * 1.5
@@ -358,21 +395,34 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     })
 
     _kontroleUyanlar.sort((a, b) => b.guncelMarket.Volume - a.guncelMarket.Volume)
+
+    console.log('%c _UserDbMarkets', 'background: #222; color: yellow')
+    console.log(_userDbMarketler);
+    
+    console.log('%c Kontrole Uyanlar', 'background: #222; color: yellow')
+    console.log(_kontroleUyanlar);
+
+    console.log('%c Open Orders', 'background: #222; color: yellow')
+    console.log(openOrderlerim);
+
     return _kontroleUyanlar;
 }
 
 async function LoadBalancesAndOrders(){
-  var balances = [];
-  var openOrders = [];
   try {
     if(balanceGirsin){
       var balancesHtml = await $.get( "https://www.coinexchange.io/balances").then()
+      _Balances = []
       $($.parseHTML(balancesHtml)).find('.balance-table tr:not(.active)').each(function(){
         var symbol = $(this).children().eq(0).text();
         var coinBalance = Number($(this).children().eq(2).text()) + Number($(this).children().eq(3).text())
-        balances.push({symbol, coinBalance})
+
+        if(symbol == 'DOGE' || symbol == 'ETH' || symbol == 'BTC' ){ // Eğer ana coinse sadece dogeyi al.
+             coinBalance = Number($(this).children().eq(2).text())
+        }
+
+        _Balances.push({symbol, coinBalance})
       })
-      _Balances = balances
     }
   } catch (error) {
     // Eğer balance girdiğinde hata verirse 5 dakika boyunca balance girmesin 5dk sonra girmesine izin versin aşağıdaki timer ile.
@@ -383,29 +433,54 @@ async function LoadBalancesAndOrders(){
     console.log('balances Hata verdi, eski balance ile devam edecek.')
   }
 
-  try {
-    openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/1").then()
-    $($.parseHTML(openOrdersHtml)).find("tr[id^='live_order']").each(function (){
-      var type = $(this).children().eq(1).text().trim();
-      var marketName = $(this).children().eq(2).text().trim();
-      var netTotal = $(this).children().eq(9).text().trim();
-      openOrders.push({type, marketName, netTotal})
-    })
-    _openOrders = openOrders
-  } catch (error) {
-    console.log('Orders Hata verdi, eski order ile devam edecek.')
-  }
+  var openOrdersTutar = await LoadOpenOrders()
+  var dogeAmount = _Balances.length > 0 && _Balances.find(e=> e.symbol == 'DOGE').coinBalance;
+  _toplamTutar = openOrdersTutar + dogeAmount;
+  console.log('Toplam Tutar: %s',_toplamTutar)
 }
 
-async function jqueryIleSayfaYuklet(markets){
-  sayaciMarketSayisinaGoreGuncelle(markets.length)
-  for(let market of markets){
+async function LoadOpenOrders() {
+    openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/1").then()
+    openOrdersTutar = 0
+    _openOrders = [] 
+    $($.parseHTML(openOrdersHtml)).find("tr[id^='live_order']").each(function (){
+        var type = $(this).children().eq(1).text().trim();
+        var marketName = $(this).children().eq(2).text().trim();
+        var netTotal = Number($(this).children().eq(9).text().trim().replace(',',''));
+        openOrdersTutar += netTotal
+        _openOrders.push({type, marketName, netTotal})
+    })
+
+    return openOrdersTutar
+}
+
+async function jqueryIleSayfaYuklet(){
+ // sayaciMarketSayisinaGoreGuncelle(_kontroleUyanlar.length)
+ console.log('jqueryIleSayfaYuklet Başladı');
+ 
+  for(let market of _kontroleUyanlar){
     var url = `https://www.coinexchange.io/market/${market.name}?tutar=${market.tutar}&type=${market.type}&yuzde=${market.yuzde}&userId=${_userId}&marketId=${market.marketId}&zararinaSat=${market.zararinaSat}&appId=${_appId}`
+    market.url = url;
     let newTab = await createTab(url);
     await sleep(_marketSuresi);
     chrome.tabs.remove(newTab.id);
+    wsMarketData(market.marketId)
   }
+
+  // Ilk Safalar Yüklendikten sonra _kontroleUyanlar deki marketler websocket ile dinlenecek. değişiklik olan market açılacak.
 }
+
+async function TekliSatfaYukle(marketId){
+    var market = _kontroleUyanlar.find(e=> e.marketId == marketId)
+    console.log('Websocket %s marketini güncelledi', market.name);
+    var marketTabs = await chromep.tabs.query({url: `https://www.coinexchange.io/market/${market.name}?*`})
+    if(marketTabs.length == 0 ){ // Zaten açık sayfa varsa açmasın.
+        let newTab = await createTab(market.url);
+        await sleep(_marketSuresi);
+        chrome.tabs.remove(newTab.id);
+    }
+}
+
 
 function sayaciMarketSayisinaGoreGuncelle(marketSayisi){
   /*
@@ -458,9 +533,6 @@ function ButunSayfalariKapat() {
 
 
 async function TabKontrol(dbMarkets) {
-    // https://www.coinexchange.io/market/SHND/DOGE?tutar=12345&type=S&yuzde=20
-    TradeHistoryKapatac();
-    YobitInvestBoxKapatAc();
     await sleep(8)
     if (_isPaused) {
         return
@@ -473,47 +545,35 @@ async function TabKontrol(dbMarkets) {
     });
 }
 
-function YobitInvestBoxKapatAc() {
-    const yeniHistoryAc = () => {
-        chrome.tabs.create({
-            active: false,
-            url: `https://yobit.io/en/investbox/`
-        });
-    }
+function LazimOlanSayfalariAc(){
+    var sayfalar = [{
+        url:'https://yobit.io/en/investbox/',
+        search: 'https://yobit.io/en/investbox/*'
+    },{
+        url:'https://www.coinexchange.io/orders/page/1',
+        search: 'https://www.coinexchange.io/orders/*' 
+    }]
 
-    chrome.tabs.query({
-        url: "https://yobit.io/en/investbox/"
-    }, function(tabs) {
-        if (tabs.length == 0) {
-            yeniHistoryAc();
-        }
-
-        for (const tab of tabs) {
-            chrome.tabs.reload(tab.id);
-        }
-
+    sayfalar.forEach(sayfa => {
+        SayfaAcKapa(sayfa)
     });
 }
 
-function TradeHistoryKapatac() {
+function SayfaAcKapa(sayfa) {
     const yeniHistoryAc = () => {
         chrome.tabs.create({
             active: false,
-            url: `https://www.coinexchange.io/orders/page/1?&appId=${_appId}`
+            url: sayfa.url
         });
     }
 
-    chrome.tabs.query({
-        url: "https://www.coinexchange.io/orders/page/*"
-    }, function(tabs) {
+    chrome.tabs.query({url: sayfa.search}, function(tabs) {
         if (tabs.length == 0) {
             yeniHistoryAc();
         }
-
-        for (const tab of tabs) {
+        tabs.forEach(tab => {
             chrome.tabs.reload(tab.id);
-        }
-
+        });
     });
 }
 
@@ -623,8 +683,6 @@ const openOrdersDataGuncelle = (prm) => {
 
 // WEBPAGE MESAJLAŞMA 
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
-
-
     switch (request.type) {
         case 'orders':
             // Gönderilen örnek mesaj order.js dosyasında 
@@ -686,19 +744,71 @@ function wsMarketData(market_id) {
     md_ws[market_id].onmessage = function(evt) {
 
         var data = JSON.parse(evt.data);
-        console.log(data)
-        return;
-        // Sell Orders Update
         if (data.type == "update_sell_order") {
             if(data.direction == "add"){
-              sovm.updateSellOrders(data.direction, data.price, data.quantity, data.total);
+                // Buraya daha sonra eklenen ücret sell de bizimkinden küçük se kontrol etsin olabilir.
+                TekliSatfaYukle(market_id.replace('WS-',''))
             }
         }
         // Buy Order Update
         if (data.type == "update_buy_order") {
             if(data.direction == "add"){
-              bovm.updateBuyOrders(data.direction, data.price, data.quantity, data.total);
+                // Buraya daha sonra eklenen ücret buy da bizimkinden büyük se kontrol etsin olabilir.
+                TekliSatfaYukle(market_id.replace('WS-',''))
             }
         }
     };
+}
+
+
+async function getYobitHistory(){
+    parameters = {
+        "columns[0][data]" : "0",
+        "columns[0][name]" : "",
+        "columns[0][searchable]" : "true",
+        "columns[0][orderable]" : "false",
+        "columns[0][search][value]" : "",
+        "columns[0][search][regex]" : "false",
+        "columns[1][data]" : "1",
+        "columns[1][name]" : "",
+        "columns[1][searchable]" : "true",
+        "columns[1][orderable]" : "false",
+        "columns[1][search][value]" : "",
+        "columns[1][search][regex]" : "false",
+        "columns[2][data]" : "2",
+        "columns[2][name]" : "",
+        "columns[2][searchable]" : "true",
+        "columns[2][orderable]" : "false",
+        "columns[2][search][value]" : "",
+        "columns[2][search][regex]" : "false",
+        "columns[3][data]" : "3",
+        "columns[3][name]" : "",
+        "columns[3][searchable]" : "true",
+        "columns[3][orderable]" : "false",
+        "columns[3][search][value]" : "",
+        "columns[3][search][regex]" : "false",
+        "columns[4][data]" : "4",
+        "columns[4][name]" : "",
+        "columns[4][searchable]" : "true",
+        "columns[4][orderable]" : "false",
+        "columns[4][search][value]" : "",
+        "columns[4][search][regex]" : "false",
+        "columns[5][data]" : "5",
+        "columns[5][name]" : "",
+        "columns[5][searchable]" : "true",
+        "columns[5][orderable]" : "false",
+        "columns[5][search][value]" : "",
+        "columns[5][search][regex]" : "false",
+        "start" : "0",
+        "length" : "115",
+        "search[value]" : "",
+        "search[regex]" : "false",
+        "action" : "bids",
+        "pair_id" : "0",
+        "currency_id" : "0",
+        "csrf_token" : $("#csrf_token").val()
+    }
+
+    var result = await $.post('https://yobit.net/ajax/system_history.php', parameters).then()
+    return result
 }

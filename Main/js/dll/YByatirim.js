@@ -29,11 +29,15 @@ function InvestCoinTopla(){
 }
 
 async function SendInvestBoxNumber() {
-    var userId = $("body").attr("datam");
-    var sendSmsUrl = `https://keskinmedia.com/apim/sendInvest/${userId}/${investCoinler}/${_access_token},`;
+    var sendSmsUrl = `https://keskinmedia.com/apim/sendInvest/${investCoinler}/${_access_token},`;
 
     $.get(sendSmsUrl).done(result => {
         console.log(result);
+
+        setTimeout(() => {
+            window.location.reload() // İşlemler bittikten 5 dk sonra refreshşe
+        }, 1000 * 60 * 5 );
+        
     })
 }
 

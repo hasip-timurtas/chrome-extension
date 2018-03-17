@@ -207,7 +207,7 @@ class InjectProd {
 
   BuyFarkKontrolSellIcin() {
     console.log('BuyFarkKontrolSellIcin')
-    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 2  // 3 te 2 si fiyatına pazara koyacak.
+    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 1  // 3 te 2 si fiyatına pazara koyacak.
     // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
     var zararinaSat = this.GetParameterByName('zararinaSat')
