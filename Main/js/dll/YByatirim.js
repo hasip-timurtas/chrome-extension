@@ -3,11 +3,7 @@ var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&
 var _access_token = "8f03c10593f0abadef0b3084ba560826", investBoxUrl = "/ajax/system_investbox.php"
 
 var investCoinler = []
-$.post(investBoxUrl, params).done(data => {
-    var result = JSON.parse(data);
-    //SendInvestBoxNumber(result.recordsFiltered)
-    Basla(result.recordsFiltered)
-})
+
 
 async function Basla(sayfa){
     for(var i =0; i < sayfa; i++){
@@ -35,7 +31,7 @@ async function SendInvestBoxNumber() {
         console.log(result);
 
         setTimeout(() => {
-            window.location.reload() // İşlemler bittikten 5 dk sonra refreshşe
+            Start();
         }, 1000 * 60 * 5 );
         
     })
@@ -45,6 +41,16 @@ function sleep(saniye) {
     return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
 }
 
+
+function Start(){
+    $.post(investBoxUrl, params).done(data => {
+        var result = JSON.parse(data);
+        //SendInvestBoxNumber(result.recordsFiltered)
+        Basla(result.recordsFiltered)
+    })
+}
+
+Start()
 
 
 // Background.js de SendSms fonksiyonunu kullan. 
