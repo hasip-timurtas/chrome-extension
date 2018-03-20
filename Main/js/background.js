@@ -1,6 +1,6 @@
 var _access_token = "8f03c10593f0abadef0b3084ba560826";
-var _sayacSuresi = 1000;
-var _marketSuresi = 5 // Açtığı her market için bekleme süresi.
+var _sayacSuresi = 500;
+var _marketSuresi = 10 // Açtığı her market için bekleme süresi.
 var _guncelSayacSuresi
 var _anaSayac
 var _isPaused = false
@@ -78,12 +78,12 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     if (_userId && !_debug && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
         if (tab.url.includes('market/') && tab.url.includes('?tutar')) {
             // Marketler İçin
-
-            chrome.tabs.executeScript(tabId, {
-                code: "document.documentElement.style.display='none';",
-                runAt: "document_start"
-            });
-
+            /*
+                chrome.tabs.executeScript(tabId, {
+                    code: "document.documentElement.style.display='none';",
+                    runAt: "document_start"
+                });
+            */
             var marketId = GetParameterByName("marketId", tab.url)
             var guncelMarket = _marketOzetler.find(mo => mo.MarketID == Number(marketId))
             chrome.tabs.executeScript(tabId, {
@@ -367,7 +367,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     })
 
     _kontroleUyanlar = _userDbMarketler.filter(e => {
-        e.yuzde = 30
+        e.yuzde = 20
         e.amount = _Balances.find(b=> b.symbol == e.name.split('/')[0]) || 0
         if (e.guncelMarket.Volume >= 1000000) {
             e.tutar = e.tutar * 1.5
