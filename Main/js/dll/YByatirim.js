@@ -31,6 +31,7 @@ async function SendInvestBoxNumber() {
         console.log(result);
 
         setTimeout(() => {
+            $("#investbox_boxes_list_paginate > span").children().first().click()
             Start();
         }, 1000 * 60 * 5 );
         
