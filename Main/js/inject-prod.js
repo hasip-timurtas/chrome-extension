@@ -196,7 +196,7 @@ class InjectProd {
 
   GetSellPrice() {
     console.log('BuyFarkKontrolSellIcin')
-    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 1  // 3 te 2 si fiyatına pazara koyacak.
+    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 2  // 3 te 2 si fiyatına pazara koyacak.
     // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
     var zararinaSat = this.GetParameterByName('zararinaSat')
@@ -207,19 +207,11 @@ class InjectProd {
   
     // Zararına sat / son buy yoksa yada alım satım arasında minimumdan büyük fark varsa bu üç koşuld a güncel price -1 giriyoruz.
     return satacagiFiyat
-    /*
-    if (zararinaSat == 'A') 
-    return satacagiFiyat // Bu sell fonksiyonu için 
-
-    // ###### Eğer last buy boşsa en üste koyar satar.
-    if (!this.recentBuys[0]) 
-      return satacagiFiyat
-*/   
   }
 
   SellBozsunMu() { // Yüzde farkı için
     var alimSatimYuzdeFarki = ((this.activeSell[0].price - this.sonBuyPrice) / this.sonBuyPrice * 100)
-    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 1  // 3 te 2 si fiyatına pazara koyacak.
+    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 2  // 3 te 2 si fiyatına pazara koyacak.
     if (alimSatimYuzdeFarki > yuzde ) { // Eğer güncel sell price ile son buy price arasındaki fark yüzdemizden fazla ise bozsun, bizim istediğimiz yüzde ile tekrar kursunç. Yüzde azalırsa sell de üste çıkarız.
       return true
     }else{
