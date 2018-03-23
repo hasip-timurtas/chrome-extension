@@ -26,6 +26,27 @@ function UygulamayiDurdur() {
     _isPaused = true
 }
 
+ // Initialize Firebase
+ var config = {
+    apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
+    authDomain: "firem-b3432.firebaseapp.com",
+    databaseURL: "https://firem-b3432.firebaseio.com",
+    projectId: "firem-b3432",
+    storageBucket: "",
+    messagingSenderId: "866789153670"
+  };
+
+firebase.initializeApp(config);
+firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
+
+const dbRefHasip = firebase.database().ref('/ccx/balances')
+
+dbRefHasip.on('value', snap=>{ console.log(snap.val())})
+/*
+dbRefHasip.on('child_added', snap=>{ console.log(snap.val())})
+dbRefHasip.on('child_changed', snap=>{ console.log(snap.val())})
+*/
+
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     if (tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
         if (tab.url.includes("/investbox")) {
@@ -257,11 +278,16 @@ async function Basla() {
     GetMarkets(); // With UserName
 
     if(!_debug){ // Debug modda değilse aşağıdaki fonksiyonları çağır
-        SayaciAktifEt();
-        //HataliSayfaKontrolSayaci();
-        _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
+        SayaciAktifEt();    
         LazimOlanSayfalariAc();
+       // _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
+       _anaSayac = setTimeout(BackgroundYenile, 1000 * _sayacSuresi);
     }
+}
+
+function BackgroundYenile(){
+    chrome.tabs.query({active:false}, tabs=>{chrome.tabs.remove(tabs.map(e=> e.id))})
+    window.location.reload()
 }
 
 async function LoadMarkets(){
@@ -546,10 +572,12 @@ async function TabKontrol(dbMarkets) {
 }
 
 function LazimOlanSayfalariAc(){
-    var sayfalar = [{
+    var sayfalar = [
+       /* {
         url:'https://yobit.io/en/investbox/',
         search: 'https://yobit.io/en/investbox/*'
-    },{
+    },*/
+    {
         url:'https://www.coinexchange.io/orders/page/1',
         search: 'https://www.coinexchange.io/orders/*' 
     }]
@@ -762,53 +790,8 @@ function wsMarketData(market_id) {
 
 
 async function getYobitHistory(){
-    parameters = {
-        "columns[0][data]" : "0",
-        "columns[0][name]" : "",
-        "columns[0][searchable]" : "true",
-        "columns[0][orderable]" : "false",
-        "columns[0][search][value]" : "",
-        "columns[0][search][regex]" : "false",
-        "columns[1][data]" : "1",
-        "columns[1][name]" : "",
-        "columns[1][searchable]" : "true",
-        "columns[1][orderable]" : "false",
-        "columns[1][search][value]" : "",
-        "columns[1][search][regex]" : "false",
-        "columns[2][data]" : "2",
-        "columns[2][name]" : "",
-        "columns[2][searchable]" : "true",
-        "columns[2][orderable]" : "false",
-        "columns[2][search][value]" : "",
-        "columns[2][search][regex]" : "false",
-        "columns[3][data]" : "3",
-        "columns[3][name]" : "",
-        "columns[3][searchable]" : "true",
-        "columns[3][orderable]" : "false",
-        "columns[3][search][value]" : "",
-        "columns[3][search][regex]" : "false",
-        "columns[4][data]" : "4",
-        "columns[4][name]" : "",
-        "columns[4][searchable]" : "true",
-        "columns[4][orderable]" : "false",
-        "columns[4][search][value]" : "",
-        "columns[4][search][regex]" : "false",
-        "columns[5][data]" : "5",
-        "columns[5][name]" : "",
-        "columns[5][searchable]" : "true",
-        "columns[5][orderable]" : "false",
-        "columns[5][search][value]" : "",
-        "columns[5][search][regex]" : "false",
-        "start" : "0",
-        "length" : "115",
-        "search[value]" : "",
-        "search[regex]" : "false",
-        "action" : "bids",
-        "pair_id" : "0",
-        "currency_id" : "0",
-        "csrf_token" : $("#csrf_token").val()
-    }
-
-    var result = await $.post('https://yobit.net/ajax/system_history.php', parameters).then()
+    var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=105&search%5Bvalue%5D=&search%5Bregex%5D=false&action=bids&pair_id=0&currency_id=0&csrf_token=` + $('#csrf_token').val();
+    var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
+    var result = await $.post('https://yobit.net/ajax/system_history.php', params).then()
     return result
 }
