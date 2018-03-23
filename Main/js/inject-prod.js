@@ -3,7 +3,8 @@ class InjectProd {
 
   async getBests() {
     this.LoadViews()
-    this.secilenMarket = JSON.parse($('body').attr('datam'))
+    var marketSum = await $.get("/api/v1/getmarketsummary?market_id=" + $("#buy-form #market_id").val()).then()
+    this.secilenMarket = marketSum.result // JSON.parse($('body').attr('datam'))
     this.guncelAlimSatimYuzdeFarki = Math.round((this.secilenMarket.AskPrice - this.secilenMarket.BidPrice) / this.secilenMarket.BidPrice * 100)
     this.DbGuncelle()
     this.AlimSatimKontrol()
@@ -13,24 +14,32 @@ class InjectProd {
     UserMarketOrdersViewModel() 
     UserRecentTradesViewModel() // son işlemler
     const activeMarketOrders = user_market_orders() // Market Datalarını doldur. Bu foksyion sell ve buy datalarını dolduruyor. user_market_orders() ve bu fonksiyonla dündürüyor.
-    this.activeBuy = $.grep(activeMarketOrders, e => e.direction == 'buy')
-    this.activeSell = $.grep(activeMarketOrders, e => e.direction == 'sell')
+    this.activeBuy = activeMarketOrders.filter(e=> e.direction == 'buy')
+    this.activeSell = activeMarketOrders.filter(e=> e.direction== 'sell') //$.grep(activeMarketOrders, e => e.direction == 'sell')
+
+    var recentTrades = user_recent_trades()
+
+    this.recentBuys = recentTrades.filter(e=>e.trade_direction == "buy")
+    this.recentSells = recentTrades.filter(e=>e.trade_direction == "sell")
+    this.sonBuyPrice = Number(this.recentBuys[0].trade_price)
+    
   }
 
   async AlimSatimKontrol() {
-    const orderSellCount = user_sell_order_prices.length, orderBuyCount = user_buy_order_prices.length, tutar = Number(this.GetParameterByName('tutar')), type = this.GetParameterByName('type')
+    const orderSellCount = user_sell_order_prices.length, 
+    orderBuyCount = user_buy_order_prices.length, 
+    tutar = Number(this.GetParameterByName('tutar')), 
+    type = this.GetParameterByName('type')
     const sellAmount = this.secilenMarket.BidPrice *  Number($('#primary-balance-clickable').html())
     const buyAmount = Number($('#secondary-balance-clickable').html()) // Sell ve Buy Amount
 
     // Returnların amacı her refresh te 1 tane işlem yapsın yoksa karışıyor.
     if(type == 'S') {
       await this.BuyIptalveRefresh()
-      return
     } 
 
     if(type == 'B') {
       await this.SellIptalveRefresh()
-      return
     } 
 
     // 1. sell değeri varsa direk sat
@@ -40,14 +49,19 @@ class InjectProd {
         await this.SellIptalveRefresh()
         return
       } else {
-         await this.sell()
-        return
+        var result = await this.sell()
+        if(result){
+          return
+        }
       }
     }
 
     //2. bakiyemiz varsa ve aktif buy yoksa buy aç 
     if(buyAmount >= tutar && orderBuyCount < 1){
-      return await this.buy()
+      var result = await this.buy()
+      if(result){
+        return
+      }
     }
 
     await this.OneGecenVarmiKontrol()
@@ -76,30 +90,17 @@ class InjectProd {
     console.log("Öne geçen varmı kontrol")
     var data = await this.GetKacinci()
 
-    /*
-    var buyBirSatoshiFark = data.buySirasi == 1 && user_buy_order_prices[0] - data.ikinciBuyPrice != 0.00000001
-    var sellBirSatoshiFark = data.sellSirasi == 1 && data.ikinciSellPrice - user_sell_order_prices[0] != 0.00000001
-
-    
-    if (data.buySirasi > 1 || buyBirSatoshiFark) {
-      this.BuyIptalveRefresh()
-    }
-
-    if (sellBirSatoshiFark) {
-      this.SellIptalveRefresh()
-    }
-  */
-
     if (data.buySirasi > 1) {
      return this.BuyIptalveRefresh()
     }
 
     if (data.sellSirasi > 1) {
-      var result = this.BuyFarkKontrolSellIcin(data.sellSirasi) // 0 değilse yeni fiyatı gir.
-      if (result.yuzde10Fark) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
-        await this.SellIptalveRefresh()
+      if (this.SellBozsunMu()) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
+        return this.SellIptalveRefresh()
       }
     }
+
+    this.BirSatoshiFarkKontrol(data)
   }
 
   OrantiliBuyAlKontrolu() {
@@ -112,15 +113,8 @@ class InjectProd {
         return false // Sell Amount 0 dan büyükse buy almasın bıraksın bi sell amountu selle koysun. kafa karışmasın. Sell amount boş olduktan sonra hesaplamayı açık orderlerdan alıcaz
       }
 
-      // son buy un pricesini alıyoruz bu örnekte 0.03610202
-      var recentTrades = user_recent_trades()
-      var recentBuys = $.grep(recentTrades, e => e.trade_direction == 'buy')
-
-      var sonBuyPrice = Number(recentBuys[0].trade_price)
-      // tutarımızı alıyoruz bu örnekte 10000
-
       // tutar / sonBuyPrice Yaptığımızda bize girdiğimiz tutar ile ne kadarlık coin alacağımızı gösterir
-      var alinacakCoinMiktari = tutar / sonBuyPrice
+      var alinacakCoinMiktari = tutar / this.sonBuyPrice
       // active sell orderdan elimizde bulunan satın alınmış coinin miktarını alıyoruz
   
       var alimisCoinMiktari = this.activeSell.length > 0 ? this.activeSell[0].quantity : 0
@@ -129,7 +123,7 @@ class InjectProd {
       if (alimisCoinMiktari < alinacakCoinMiktari) {
         var yeniTutar = alinacakCoinMiktari - alimisCoinMiktari
         // Burada tutar doge değilde diğer coinden girdiği için amounta ekledik. eğer bunu aşağıdaki gibi totale ekleseydik. 3000 doluk değilde 3000 bin diğer coinlik değeri doga yazar alırdı. örnek 3000 god 30 coin ise 30 dogluk alırdı.
-        $('#sell-form #inputAmount').val(yeniTutar)
+        $('#buy-form #inputAmount').val(yeniTutar)
         return true
       } else {
         return false
@@ -148,29 +142,36 @@ class InjectProd {
     console.log('buy')
     var yuzde = this.GetParameterByName('yuzde')
     var type = this.GetParameterByName('type')
-    if (type == 'S') {
-      console.log('Alış iptal çünkü sadece satış girildi')
-      return
+    if (type == 'S' || this.secilenMarket.Volume < 50000) {
+      console.log('Alış iptal çünkü sadece satış girildi veya volume 50 binden düşük.')
+      return false
     }
 
     if (this.guncelAlimSatimYuzdeFarki < parseFloat(yuzde)) {
       console.log('Alış iptal çünkü % farkı ' + yuzde + ' den küçük. Fark : ' + this.guncelAlimSatimYuzdeFarki)
-      return
+      return false
     }
 
     if (!this.OrantiliBuyAlKontrolu()) {
       console.log('Yeterince buy aldı daha fazla alma. Satış yap. Böylelikle tutar 10 bin girilmişse 10 bin dogelik coin alır ve satana kadar durmaz.satınca iş biter.')
-      return
+      return false
+    }
+
+    var yeniFiyat = parseFloat(this.secilenMarket.BidPrice) + 0.00000001
+
+    if(yeniFiyat < this.sonBuyPrice && (this.activeSell.length > 0 || sellAmount > 0.0001) ){
+      // Eğer yeni buy price son buy priceden büyükse ve daha önceden alım yapmış ve henüz satmamışsa buy iptal çünkü elindeki selli eski buy priceye göre değil yeni ve yüksek olana göre hesaplıcak. Kar az olacak yada zarar.
+      console.log('Yeni Buy son  buydan küçük, sell var. Sell priceyi yanlış hesaplayacağından buy iptal.')
+      return false
     }
 
     console.log('Alımda')
-
     orderType = '1'
-    var yeniFiyat = parseFloat(this.secilenMarket.BidPrice) + 0.00000001
     yeniFiyat = yeniFiyat.toFixed(8)
     $('#buy-form #inputPrice').val(yeniFiyat)
     this.InputPriceKeyUpBuy()
     confirmOrderSubmitCore()
+    return true
   }
 
   sell() {
@@ -180,22 +181,9 @@ class InjectProd {
 
     if (type == 'B') {
       console.log('Satış iptal çünkü sadece alış girildi')
-      return
+      return false
     }
-
-
-    var result = this.BuyFarkKontrolSellIcin() // 0 değilse yeni fiyatı gir.
-
-    var yeniFiyat = 0
-
-    if (result.yuzde10Fark) { // Alım satıl arasında %10 ve üstü fark varsa normal olarak ekler oda en önde olur.
-      yeniFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
-      console.log('Alım satım arasında %10 dan fazla fark var, satış 1. sırada')
-    } else {
-      // Alım ile satım arasındaki fark %10 dan düşükse  aldığı fiyata %10 ekleyip satışa koyar oda arka sıraya ekler.
-      yeniFiyat = result.yeniUcret
-      console.log('Alım satım arasında %10 fark yok o yüzden %10 ekleyip satışa sürüldü o yüzden satış 1. sırada değil.')
-    }
+    var yeniFiyat = this.GetSellPrice()
 
     orderType = '0'
     yeniFiyat = yeniFiyat.toFixed(8)
@@ -203,49 +191,54 @@ class InjectProd {
     $('#sell-form #inputAmount').val(tutar)
     this.InputPriceKeyUpSell()
     confirmOrderSubmitCore()
+    return true
   }
 
-  BuyFarkKontrolSellIcin() {
+  GetSellPrice() {
     console.log('BuyFarkKontrolSellIcin')
     var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 1  // 3 te 2 si fiyatına pazara koyacak.
     // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
     var zararinaSat = this.GetParameterByName('zararinaSat')
+    
+    var alimSatimYuzdeFarki = ((satacagiFiyat - this.sonBuyPrice) / this.sonBuyPrice * 100)
+    if (alimSatimYuzdeFarki < yuzde )
+      return  this.sonBuyPrice + (this.sonBuyPrice / 100 * yuzde)
+  
+    // Zararına sat / son buy yoksa yada alım satım arasında minimumdan büyük fark varsa bu üç koşuld a güncel price -1 giriyoruz.
+    return satacagiFiyat
+    /*
+    if (zararinaSat == 'A') 
+    return satacagiFiyat // Bu sell fonksiyonu için 
 
-    if (zararinaSat == 'A') {
-      return {
-        yuzde10Fark: true, // Eğer öne geçen varsa pazarı boz bu öne geçen varmı kontolü için 
-        yeniUcret: satacagiFiyat // Bu sell fonksiyonu için 
-      }
+    // ###### Eğer last buy boşsa en üste koyar satar.
+    if (!this.recentBuys[0]) 
+      return satacagiFiyat
+*/   
+  }
+
+  SellBozsunMu() { // Yüzde farkı için
+    var alimSatimYuzdeFarki = ((this.activeSell[0].price - this.sonBuyPrice) / this.sonBuyPrice * 100)
+    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 1  // 3 te 2 si fiyatına pazara koyacak.
+    if (alimSatimYuzdeFarki > yuzde ) { // Eğer güncel sell price ile son buy price arasındaki fark yüzdemizden fazla ise bozsun, bizim istediğimiz yüzde ile tekrar kursunç. Yüzde azalırsa sell de üste çıkarız.
+      return true
+    }else{
+      return false
+    }
+  }
+
+  BirSatoshiFarkKontrol(data){
+    var buyBirSatoshiFark = data.buySirasi == 1 && user_buy_order_prices[0] - data.ikinciBuyPrice != 0.00000001
+    var sellBirSatoshiFark = data.sellSirasi == 1 && data.ikinciSellPrice - user_sell_order_prices[0] != 0.00000001
+    
+    if (buyBirSatoshiFark) {
+      console.log('1 Satoshi fark BUY boz tekrar kur')
+      this.BuyIptalveRefresh()
     }
 
-  // ###### Eğer last buy boşsa en üste koyar satar.
-    var recentTrades = user_recent_trades()
-    var recentBuys = $.grep(recentTrades, function (e) {
-      return e.trade_direction == 'buy'
-    })
-
-    if (!recentBuys[0]) {
-      return {
-        yuzde10Fark: false,
-        yeniUcret: satacagiFiyat
-      }
-    }
-
-
-    var aldigiFiyat = parseFloat(recentBuys[0].trade_price)
-
-    var alimSatimYuzdeFarki = ((satacagiFiyat - aldigiFiyat) / aldigiFiyat * 100)
-
-    if (alimSatimYuzdeFarki >= yuzde ) {
-      return {
-        yuzde10Fark: true
-      }
-    } else {
-      return {
-        yuzde10Fark: false,
-        yeniUcret: aldigiFiyat + (aldigiFiyat / 100 * yuzde)
-      }
+    if (sellBirSatoshiFark) {
+      console.log('1 Satoshi fark SELL boz tekrar kur')
+      this.SellIptalveRefresh()
     }
   }
 
@@ -259,7 +252,7 @@ class InjectProd {
     var cancelOrderID = this.activeBuy[0].order_id
     // Burda buy iptal edip refresh ediyorduk. Sistem zaten refresh ediyor o yüzden sadece iptal ediyoruz.
     var result = await $.post(Routing.generate('deleteorder'), {order_id : cancelOrderID}).then()
-    await this.sleep(5)
+    await this.sleep(10)
     window.location.reload()
      /*
     await this.sleep(20)
@@ -287,7 +280,7 @@ class InjectProd {
     var cancelOrderID = this.activeSell[0].order_id
     // Burda buy iptal edip refresh ediyorduk. Sistem zaten refresh ediyor o yüzden sadece iptal ediyoruz.
     var result = await $.post(Routing.generate('deleteorder'), {order_id : cancelOrderID}).then()
-    await this.sleep(5)
+    await this.sleep(10)
     window.location.reload()
     /*
     await this.sleep(20)
@@ -398,28 +391,11 @@ class InjectProd {
 
     SON 5 SAATLİK ALIM VE SATIM ARASINDA
     */
-
-    var recentTrades = user_recent_trades()
     var neKadardanAldi = 0
     var neKadardanSatti = 0
 
-    var recentTrades = user_recent_trades()
-    var recents = $.grep(recentTrades, function (e) {
-      return new Date(e.trade_time) > Date.now() - 1000 * 60 * 60 * 5 // son 5 saat önceki alışsatışları getir.
-    })
-
-
-    var recentBuys = $.grep(recents, function (e) {
-      return e.trade_direction == 'buy'
-    })
-
-    var recentSells = $.grep(recents, function (e) {
-      return e.trade_direction == 'sell'
-    })
-
-
-    if (recentBuys.length > 0) {
-      neKadardanAldi = recentBuys[0].trade_price
+    if (this.recentBuys.length > 0) {
+      neKadardanAldi = this.recentBuys[0].trade_price
     } else {
       neKadardanAldi = this.SonBuyDegeriniAl()
     }

@@ -1,6 +1,6 @@
 var _access_token = "8f03c10593f0abadef0b3084ba560826";
 var _sayacSuresi = 500;
-var _marketSuresi = 10 // Açtığı her market için bekleme süresi.
+var _marketSuresi = 15 // Açtığı her market için bekleme süresi.
 var _guncelSayacSuresi
 var _anaSayac
 var _isPaused = false
@@ -286,7 +286,7 @@ async function Basla() {
 }
 
 function BackgroundYenile(){
-    chrome.tabs.query({active:false}, tabs=>{chrome.tabs.remove(tabs.map(e=> e.id))})
+    chrome.tabs.query({}, tabs=>{chrome.tabs.remove(tabs.filter(e=> !e.url.includes("chrome-extension") && e.active == false).map(e=> e.id))})
     window.location.reload()
 }
 
@@ -393,8 +393,9 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     })
 
     _kontroleUyanlar = _userDbMarketler.filter(e => {
-        e.yuzde = 20
+        e.yuzde = 15
         e.amount = _Balances.find(b=> b.symbol == e.name.split('/')[0]) || 0
+        e.openOrders = _openOrders.filter(o=> o.marketName == e.name);
         if (e.guncelMarket.Volume >= 1000000) {
             e.tutar = e.tutar * 1.5
             e.yuzde = e.yuzde * 0.5
@@ -496,14 +497,35 @@ async function jqueryIleSayfaYuklet(){
   // Ilk Safalar Yüklendikten sonra _kontroleUyanlar deki marketler websocket ile dinlenecek. değişiklik olan market açılacak.
 }
 
-async function TekliSatfaYukle(marketId){
-    var market = _kontroleUyanlar.find(e=> e.marketId == marketId)
-    console.log('Websocket %s marketini güncelledi', market.name);
+async function TekliSatfaYukle(market){
+    var result = SeriSaysaEngelle(market)
+    if(!result){
+        return
+    }
+
     var marketTabs = await chromep.tabs.query({url: `https://www.coinexchange.io/market/${market.name}?*`})
     if(marketTabs.length == 0 ){ // Zaten açık sayfa varsa açmasın.
         let newTab = await createTab(market.url);
         await sleep(_marketSuresi);
         chrome.tabs.remove(newTab.id);
+    }
+}
+var _bekleyenler = []
+async function SeriSaysaEngelle(market){
+    // Burada seri açılan sayfayı engelleyeceğiz.
+    // Eklenen sayfayı beklemeliler diye bir array a koyucaz ve o arraydan 10 saniye sonra silicez. Bu rüreçte yeni sayfa açarken bu arrayın içinde olup olmadığını kontrol edecek.
+    if(_bekleyenler.includes(market.marketId)){
+        console.log('Websocket %s marketini güncellemedi çünkü bekleyenler listesinde.', market.name);
+        return false
+    } else { 
+        console.log('Websocket %s marketini güncelledi', market.name);
+        _bekleyenler.push(market.marketId)
+        var index = _bekleyenler.indexOf(market.marketId);
+        // 10 saniye sonra silecek
+        setTimeout(() => {
+            _bekleyenler.splice(index, 1);
+        }, 10000);
+      return true  
     }
 }
 
@@ -749,6 +771,7 @@ function GetFunctionBodyCode(fnc) {
 var md_ws = []
 function wsMarketData(market_id) {
     market_id = Number.isInteger(market_id) ? 'WS-'+ market_id :  market_id
+    var wsMarket = _kontroleUyanlar.find(e=> e.marketId == market_id)
     var ws_auth_token = '';
 
     if(!md_ws[market_id]){
@@ -770,20 +793,16 @@ function wsMarketData(market_id) {
     }
 
     md_ws[market_id].onmessage = function(evt) {
-
         var data = JSON.parse(evt.data);
-        if (data.type == "update_sell_order") {
-            if(data.direction == "add"){
+        console.log(data);
+        if (data.type == "update_sell_order" && wsMarket.openOrders.map(e=>e.type).includes("SELL") && data.direction == "add") {
                 // Buraya daha sonra eklenen ücret sell de bizimkinden küçük se kontrol etsin olabilir.
-                TekliSatfaYukle(market_id.replace('WS-',''))
-            }
+            TekliSatfaYukle(wsMarket)
         }
         // Buy Order Update
-        if (data.type == "update_buy_order") {
-            if(data.direction == "add"){
+        if (data.type == "update_buy_order" && wsMarket.openOrders.map(e=>e.type).includes("BUY") && data.direction == "add") {
                 // Buraya daha sonra eklenen ücret buy da bizimkinden büyük se kontrol etsin olabilir.
-                TekliSatfaYukle(market_id.replace('WS-',''))
-            }
+            TekliSatfaYukle(wsMarket)
         }
     };
 }
