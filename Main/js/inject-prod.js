@@ -24,7 +24,7 @@ class InjectProd {
 
     this.recentBuys = recentTrades.filter(e=>e.trade_direction == "buy")
     this.recentSells = recentTrades.filter(e=>e.trade_direction == "sell")
-    this.sonBuyPrice = Number(this.recentBuys[0].trade_price)
+    this.sonBuyPrice = Number(this.recentBuys.length && this.recentBuys[0].trade_price)
     
   }
 

