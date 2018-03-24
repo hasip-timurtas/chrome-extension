@@ -318,7 +318,7 @@ async function LoadMarkets(){
 async function GetMarkets() {
     if (!_isPaused) { // pause edilmemişse gir
         ButunSayfalariYenile()
-        if (_userId == 5) { // For doge
+        if (_userId == 5 || _userId == 2) { // For doge
             await KontroleUyanDoge();
             if(_debug)
                 return 
