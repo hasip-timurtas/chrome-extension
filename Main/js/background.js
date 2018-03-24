@@ -177,6 +177,7 @@ $(document).ready(function() {
         $("#sayac").show();
         $("#loginName").html(UserName);
         _userId = userId
+        _userName = _userId == 2 ? 'hasip4441' : _userId == 5 ? 'karita' : 'musa'
         Basla();
     }
 
@@ -219,6 +220,7 @@ async function LoginCheck() {
         $("#sayac").show();
         $("#loginName").html(userName);
         _userId = result.data.id;
+        _userName = _userId == 2 ? 'hasip4441' : _userId == 5 ? 'karita' : 'musa'
         if (_userId) {
             Basla();
         } else {
@@ -451,9 +453,8 @@ async function LoadBalancesAndOrders(){
 
   var openOrdersTutar = await LoadOpenOrders()
   var dogeAmount = _Balances.length > 0 && _Balances.find(e=> e.symbol == 'DOGE').coinBalance;
-  _userName = _userId == 2 ? 'hasip4441' : _userId == 5 ? 'karita' : 'musa'
   _toplamTutar = openOrdersTutar + dogeAmount;
-  FireBaseBalanceUpdate()
+  BalanceUpdateFB()
   console.log('Toplam Tutar: %s',_toplamTutar)
 }
 
@@ -468,7 +469,7 @@ async function LoadOpenOrders() {
         openOrdersTutar += netTotal
         _openOrders.push({type, marketName, netTotal})
     })
-
+    OrdersUpdateFB()
     return openOrdersTutar
 }
 
@@ -813,17 +814,21 @@ function LoadFireBaseConfig() {
     _db = firebase.database()
     _coinexChange = _db.ref().child('coinexchange')
     _balances = _coinexChange.child('balances')
-    
 }
 
-function FireBaseBalanceUpdate(){
-    _balances.child(_userName).set(parseInt(_toplamTutar))
-    _balances.once('value', function(snapshot) {
+function BalanceUpdateFB(){
+    _db.ref('/coinexchange/balances').child(_userName).set(_toplamTutar)
+    _db.ref('/coinexchange/balances').once('value', snapshot => {
         var values = snapshot.val()
         var toplam = Object.values(values).reduce((s,c)=>s+c)
-        _balances.child('Toplam').set(toplam)
+        _db.ref('/coinexchange/Toplam').set(toplam)
     });
 }
+
+function OrdersUpdateFB(){
+    _db.ref('/coinexchange/openOrders').child(_userName).set(_openOrders)
+}
+
 
 
 
