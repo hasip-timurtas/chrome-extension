@@ -58,7 +58,6 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     }
 
     if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete" && tab.status == 'complete') {
-
         if (tab.url.includes("/Exchange?market=")) {
             chrome.tabs.executeScript(tabId, {
                 code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/cryMarket.js?v='+ Math.random(); document.head.appendChild(i);`,
@@ -104,6 +103,11 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
                     code: "document.documentElement.style.display='none';",
                     runAt: "document_start"
                 });
+            
+            chrome.tabs.executeScript(tabId, {
+                file: chrome.extension.getURL('/js/dll/firebase.js'),
+                runAt: "document_end"
+            });
             */
             var marketId = GetParameterByName("marketId", tab.url)
             var guncelMarket = _marketOzetler.find(mo => mo.MarketID == Number(marketId))
@@ -482,7 +486,6 @@ async function LoadOpenOrders() {
 }
 
 async function jqueryIleSayfaYuklet(){
- // sayaciMarketSayisinaGoreGuncelle(_kontroleUyanlar.length)
  console.log('jqueryIleSayfaYuklet Başladı');
  
   for(let market of _kontroleUyanlar){
@@ -493,8 +496,6 @@ async function jqueryIleSayfaYuklet(){
     chrome.tabs.remove(newTab.id);
     wsMarketData(market.marketId)
   }
-
-  // Ilk Safalar Yüklendikten sonra _kontroleUyanlar deki marketler websocket ile dinlenecek. değişiklik olan market açılacak.
 }
 
 async function TekliSatfaYukle(market){
@@ -529,17 +530,6 @@ async function SeriSaysaEngelle(market){
     }
 }
 
-
-function sayaciMarketSayisinaGoreGuncelle(marketSayisi){
-  /*
-    Ana sayacı, Yani tekrar başa alması sayacını market sayısına göre belirliyoruz. Market sayısı 5 ise 5 * 6 = 30 saniye sürecek toplam market.
-    Ama bu süreyi KontroleUyanDoge den sonra değiştiriyoruz. ilk başta 60.
-  */
-  _sayacSuresi = marketSayisi * _marketSuresi + 30
-  _guncelSayacSuresi = marketSayisi * _marketSuresi + 30
-  clearTimeout(_anaSayac);
-  _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
-}
 
 function createTab (url) {
   return new Promise(resolve => {

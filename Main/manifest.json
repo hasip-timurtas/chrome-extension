@@ -13,7 +13,6 @@
     "tabs",
     "activeTab",
     "contextMenus",
-    "https://www.coinexchange.io/*",
     "storage",
     "background",
     "webNavigation",
@@ -31,20 +30,5 @@
     "matches": [
       "https://www.coinexchange.io/*"
     ]
-  },
-  "content_scripts": [
-    {
-      "run_at": "document_end",
-      "all_frames": true,
-      "matches": [
-        "https://*/*",
-        "http://*/*"
-      ],
-      "css": [],
-      "js": [
-        "js/dll/jquery.js",
-        "js/dll/robot.js"
-      ]
-    }
-  ]
+  }
 }
