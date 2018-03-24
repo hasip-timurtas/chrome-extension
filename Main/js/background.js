@@ -7,10 +7,11 @@ var _isPaused = false
 var balanceGirsin = true
 var secilenMarket;
 var _login = false;
-var _userId;
+var _userId
+var _userName
 var _openOrders = [];
 var _toplamTutar = 0
-const chromep = new ChromePromise();
+var chromep = new ChromePromise();
 var _appId = chrome.runtime.id;
 var _marketOzetler = []
 var _kontroleUyanlar = []
@@ -18,6 +19,10 @@ var _getMarkets = []
 var _userDbMarketler = []
 var _Balances = []
 var _debug = false
+var _db
+var _coinexChange
+var _balances
+
 function UygulamayiBaslat() {
     _isPaused = false
 }
@@ -25,27 +30,6 @@ function UygulamayiBaslat() {
 function UygulamayiDurdur() {
     _isPaused = true
 }
-
- // Initialize Firebase
- var config = {
-    apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
-    authDomain: "firem-b3432.firebaseapp.com",
-    databaseURL: "https://firem-b3432.firebaseio.com",
-    projectId: "firem-b3432",
-    storageBucket: "",
-    messagingSenderId: "866789153670"
-  };
-
-firebase.initializeApp(config);
-firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
-
-const dbRefHasip = firebase.database().ref('/ccx/balances')
-
-dbRefHasip.on('value', snap=>{ console.log(snap.val())})
-/*
-dbRefHasip.on('child_added', snap=>{ console.log(snap.val())})
-dbRefHasip.on('child_changed', snap=>{ console.log(snap.val())})
-*/
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     if (tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
@@ -278,6 +262,7 @@ function HataliSayfalariYenile() {
 }
 
 async function Basla() {
+    LoadFireBase();
     await LoadMarkets();
     GetMarkets(); // With UserName
 
@@ -466,7 +451,9 @@ async function LoadBalancesAndOrders(){
 
   var openOrdersTutar = await LoadOpenOrders()
   var dogeAmount = _Balances.length > 0 && _Balances.find(e=> e.symbol == 'DOGE').coinBalance;
+  _userName = _userId == 2 ? 'hasip4441' : _userId == 5 ? 'karita' : 'musa'
   _toplamTutar = openOrdersTutar + dogeAmount;
+  FireBaseBalanceUpdate()
   console.log('Toplam Tutar: %s',_toplamTutar)
 }
 
@@ -804,10 +791,12 @@ async function getYobitHistory(){
     return result
 }
 
-async function LoadFireBase(){
-    await $.getScript('https://www.gstatic.com/firebasejs/4.12.0/firebase.js')
-    LoadFireBaseConfig()
-    return "Yüklendi";
+async function LoadFireBase() {
+    //chrome.extension.getURL('/js/dll/firebase.js')
+    //await $.getScript('https://www.gstatic.com/firebasejs/4.12.0/firebase.js')
+    await $.getScript('/js/dll/firebase.js')
+    await LoadFireBaseConfig()
+    console.log('Firebase Yüklendi')
 }
 
 function LoadFireBaseConfig() {
@@ -821,4 +810,41 @@ function LoadFireBaseConfig() {
         messagingSenderId: "866789153670"
     };
     firebase.initializeApp(config);
+    _db = firebase.database()
+    _coinexChange = _db.ref().child('coinexchange')
+    _balances = _coinexChange.child('balances')
+    
 }
+
+function FireBaseBalanceUpdate(){
+    _balances.child(_userName).set(parseInt(_toplamTutar))
+    _balances.once('value', function(snapshot) {
+        var values = snapshot.val()
+        var toplam = Object.values(values).reduce((s,c)=>s+c)
+        _balances.child('Toplam').set(toplam)
+    });
+}
+
+
+
+/*
+ // Initialize Firebase
+ var config = {
+    apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
+    authDomain: "firem-b3432.firebaseapp.com",
+    databaseURL: "https://firem-b3432.firebaseio.com",
+    projectId: "firem-b3432",
+    storageBucket: "",
+    messagingSenderId: "866789153670"
+  };
+
+firebase.initializeApp(config);
+firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
+
+const dbRefHasip = firebase.database().ref('/ccx/balances')
+
+dbRefHasip.on('value', snap=>{ console.log(snap.val())})
+
+dbRefHasip.on('child_added', snap=>{ console.log(snap.val())})
+dbRefHasip.on('child_changed', snap=>{ console.log(snap.val())})
+*/
