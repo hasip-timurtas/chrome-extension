@@ -3,6 +3,9 @@ class InjectProd {
 
   async getBests() {
     this.LoadViews()
+    this.userId = this.GetParameterByName('userId')
+    this.marketName = document.URL.split('/')[4]+ '/'+document.URL.split('/')[5].split('?')[0]
+    this.userName = this.userId  == 2 ? 'hasip4441' : this.userId  == 5 ? 'karita' : 'musa'
     var marketSum = await $.get("/api/v1/getmarketsummary?market_id=" + $("#buy-form #market_id").val()).then()
     this.secilenMarket = marketSum.result // JSON.parse($('body').attr('datam'))
     this.guncelAlimSatimYuzdeFarki = Math.round((this.secilenMarket.AskPrice - this.secilenMarket.BidPrice) / this.secilenMarket.BidPrice * 100)
@@ -167,6 +170,11 @@ class InjectProd {
       return false
     }
 
+    if(this.BuyKontrolFromDbFB('BUY')){
+      console.log(this.marketName + ' %c BUY - Bu market başka bir pazarda Mevcut o yüzden iptal.','color:red');
+      return false
+    }
+
     console.log('Alımda')
     orderType = '1'
     yeniFiyat = yeniFiyat.toFixed(8)
@@ -176,7 +184,7 @@ class InjectProd {
     return true
   }
 
-  sell() {
+  async sell() {
     console.log('sell')
     var tutar = $('#primary-balance-clickable').html() //
     var type = this.GetParameterByName('type')
@@ -185,6 +193,12 @@ class InjectProd {
       console.log('Satış iptal çünkü sadece alış girildi')
       return false
     }
+    var result = await this.BuyKontrolFromDbFB('SELL')
+    if(result){
+      console.log(this.marketName + ' SELL - Bu market başka bir pazarda Mevcut o yüzden iptal.');
+      return false
+    }
+
     var yeniFiyat = this.GetSellPrice()
 
     orderType = '0'
@@ -248,21 +262,6 @@ class InjectProd {
     var result = await $.post(Routing.generate('deleteorder'), {order_id : cancelOrderID}).then()
     await this.sleep(10)
     window.location.reload()
-     /*
-    await this.sleep(20)
-    window.location.reload()
-    $.ajax({
-      type: 'POST',
-      url: Routing.generate('deleteorder'),
-      data: 'order_id=' + cancelOrderID,
-      dataType: 'json',
-      timeout: 5000,
-      success: async function (data, status) {
-        await this.sleep(20)
-        window.location.reload()
-      }
-    })
-    */
   }
 
   async SellIptalveRefresh() {
@@ -276,21 +275,6 @@ class InjectProd {
     var result = await $.post(Routing.generate('deleteorder'), {order_id : cancelOrderID}).then()
     await this.sleep(10)
     window.location.reload()
-    /*
-    await this.sleep(20)
-    window.location.reload()
-    $.ajax({
-      type: 'POST',
-      url: Routing.generate('deleteorder'),
-      data: 'order_id=' + cancelOrderID,
-      dataType: 'json',
-      timeout: 5000,
-      success: async function (data, status) {
-        await this.sleep(20)
-        window.location.reload()
-      }
-    })
-    */
   }
 
   DbGuncelle() {
@@ -398,9 +382,68 @@ class InjectProd {
   sleep(saniye) {
     return new Promise(resolve => setTimeout(resolve, saniye * 1000)) // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
   }
+
+  async BuyKontrolFromDbFB(type){
+    const openOrdersRef = this.db.ref('/coinexchange/openOrders')
+    const snapshot = await openOrdersRef.once('value')
+    const openOrders = snapshot.val()
+
+    var concatOrders = []
+    Object.values(openOrders).filter(e=> {concatOrders = concatOrders.concat(e)})
+    var result = concatOrders.find(e=> e.type == type && e.marketName == this.marketName)
+    if(result){
+      return true  // Eğer bu kayıt veritabanında zaten varsa true döndür.
+    }
+
+    return false
+  }
 }
 
-var injectProd = new InjectProd()
- 
-injectProd.getBests()
+var _injectProd
+async function Basla(){
+  await LoadFireBase()
+  _injectProd = new InjectProd()
+  _injectProd.db = firebase.database()
+  _injectProd.getBests()
 
+}
+
+async function LoadFireBase() {
+  //chrome.extension.getURL('/js/dll/firebase.js')
+  await $.getScript('https://www.gstatic.com/firebasejs/4.12.0/firebase.js')
+  //await $.getScript('/js/dll/firebase.js')
+  await LoadFireBaseConfig()
+  console.log('Firebase Yüklendi')
+}
+
+function LoadFireBaseConfig() {
+  // Initialize Firebase
+  var config = {
+      apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
+      authDomain: "firem-b3432.firebaseapp.com",
+      databaseURL: "https://firem-b3432.firebaseio.com",
+      projectId: "firem-b3432",
+      storageBucket: "firem-b3432.appspot.com",
+      messagingSenderId: "866789153670"
+  };
+  firebase.initializeApp(config);
+  firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
+  _db = firebase.database()
+  _coinexChange = _db.ref().child('coinexchange')
+  _balances = _coinexChange.child('balances')
+}
+
+ function BalanceUpdateFB(){
+  _db.ref('/coinexchange/balances').child(_userName).set(_toplamTutar)
+  _db.ref('/coinexchange/balances').once('value', snapshot => {
+      var values = snapshot.val()
+      var toplam = Object.values(values).reduce((s,c)=>s+c)
+      _db.ref('/coinexchange/Toplam').set(toplam)
+  });
+}
+
+function OrdersUpdateFB(){
+  _db.ref('/coinexchange/openOrders').child(_userName).set(_openOrders)
+}
+
+Basla()
