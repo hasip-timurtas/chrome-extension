@@ -20,8 +20,6 @@ var _userDbMarketler = []
 var _Balances = []
 var _debug = false
 var _db
-var _coinexChange
-var _balances
 
 function UygulamayiBaslat() {
     _isPaused = false
@@ -32,7 +30,7 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
-    if (tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
+    if (_userId == 5 && tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
         if (tab.url.includes("/investbox")) {
             chrome.tabs.executeScript(tabId, {
                 code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
@@ -577,10 +575,10 @@ async function TabKontrol(dbMarkets) {
 
 function LazimOlanSayfalariAc(){
     var sayfalar = [
-       /* {
+        {
         url:'https://yobit.io/en/investbox/',
         search: 'https://yobit.io/en/investbox/*'
-    },*/
+    },
     {
         url:'https://www.coinexchange.io/orders/page/1',
         search: 'https://www.coinexchange.io/orders/*' 
@@ -807,8 +805,6 @@ async function LoadFireBase() {
     };
     firebase.initializeApp(config);
     _db = firebase.database()
-    _coinexChange = _db.ref().child('coinexchange')
-    _balances = _coinexChange.child('balances')
     console.log('Firebase Yüklendi')
 }
 

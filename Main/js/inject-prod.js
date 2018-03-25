@@ -429,8 +429,6 @@ function LoadFireBaseConfig() {
   firebase.initializeApp(config);
   firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
   _db = firebase.database()
-  _coinexChange = _db.ref().child('coinexchange')
-  _balances = _coinexChange.child('balances')
 }
 
  function BalanceUpdateFB(){
