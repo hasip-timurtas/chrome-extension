@@ -35,35 +35,12 @@ async function CheckInvest(){
     const dbInvests = snapshot.val()
     const result = await ObjectArrayEqual(dbInvests, investCoinler)
     if(!result){
-        let yeniEklenenler = []
-        for (const coin of investCoinler) {
-            var coinVarmi = dbInvests.find(e=> e && e.coinName == coin.coinName && e.period == coin.period && e.yuzde == coin.yuzde)
-            if(!coinVarmi){
-                yeniEklenenler.push(coin)
-            }
-        }
-
-        if(yeniEklenenler.length > 0){
-            // SMS AT
-            yeniEklenenler.forEach(e=>{
-                sendMessage(`InvestBox Yeni Coin=${e.coinName} Period=${e.period} Yuzde=${e.yuzde}`)
-            })
-        }
-
+        // Yenisi ile eskisiyle arasında fark varsa dbye ekle.
         openOrdersRef.set(investCoinler)
     }else{
         console.log('Coinler Eşit');
     }
 }
-
-async function sendMessage(mesaj) {
-    var sendSmsUrl = `http://209.250.238.100:1234/send-sms`;
-	var access_token = _access_token
-    $.get(sendSmsUrl,{mesaj,access_token}).done(result => {
-        console.log(result);
-    })
-}
-
 function sleep(saniye) {
     return new Promise(resolve => setTimeout(resolve, saniye * 1000)); // saniyeyi 1000 e çarptım milisaniye ile çalışıyor çünkü
 }
@@ -78,18 +55,8 @@ async function Start(){
     })
 }
 
-
 Start()
 
-
-// Background.js de SendSms fonksiyonunu kullan. 
-/*
-    Yapılacaklar : 
-    Background.js ye yobit sayfasını ekle. uzak masaüstünde çalışsın yani _userId dolu ise çalışsın.
-    Background.js de listeyi güncel tutsun, yobit sayfası her güncellendiğinde bu liste kontrol edilsin.
-    Artış olduğunda Sendsms fonksiyonu kullanılarak sms gönderilsin.
-
-*/ 
 async function LoadFireBase() {
     //chrome.extension.getURL('/js/dll/firebase.js')
     await $.getScript('https://www.gstatic.com/firebasejs/4.12.0/firebase.js')
