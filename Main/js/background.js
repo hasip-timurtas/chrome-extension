@@ -834,13 +834,6 @@ function AllBalanceUpdateFB(){
     _db.ref('/coinexchange/allBalances').child(_userName).set(_Balances)
 }
 
-var _yobitCsrf
-async function GetCsrfTokenYobit(){
-    var urlm='https://yobit.net/'
-    var html = await $.get(urlm)
-    _yobitCsrf = $($.parseHTML(html)).filter("#csrf_token").val()
-}
-
 async function getYobitHistory(){
     var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=105&search%5Bvalue%5D=&search%5Bregex%5D=false&action=bids&pair_id=0&currency_id=0&csrf_token=${_yobitCsrf}`
     var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
@@ -863,40 +856,19 @@ async function getYobitHistory(){
 async function getYobitOpenOrders(){
     var urlm='https://yobit.net/en/orders/'
     var html = await $.get(urlm)
-    var ordersTableId = 'orders_table'
-    var openOrders = htmlTableToArray(html,ordersTableId)
-    openOrders.shift()
-    var newOpenOrders = openOrders.map(e=> e ={
-        TimeStamp: e[0],
-        Market: $($.parseHTML(e[1])).text(),
-        Type: $($.parseHTML(e[2])).text() == 'SELL' ? 'Sell' : 'Buy',
-        Rate: Number(e[3]),
-        Amount: Number(e[4]),
-        Complated: Number(e[4]),
-        Total: Number(e[5]),
-        GuncelSellPrice: Number(e[6])
-    })
-    return newOpenOrders
+    var openOrders = htmlToOpenOrdersArray($.parseHTML(html))
+    return openOrders
 }
 
 async function getYobitBalances(){
     var urlm='https://yobit.net/en/wallets/'
     var html = await $.get(urlm)
-    _yobitCsrf = $($.parseHTML(html)).filter("#csrf_token").val() /// CsrfTokeni Yeniliyoruz. History Icin
-    var ordersTableId = 'wallets_table'
-    var balances = htmlTableToArray(html,ordersTableId)
-    balances.shift()
-    var newBalances = balances.map(e=> e ={
-        Symbol: $($.parseHTML(e[0])).text(),
-        Available: Number(e[1]),
-        Total: Number(e[1]) + Number(e[3]),
-        EstBtc: Number(e[4])
-    })
-    return newBalances
+    _yobitCsrf = $(html).filter("#csrf_token").val()  /// CsrfTokeni Yeniliyoruz. History Icin
+    var balances = htmlToBalancesArray(html)
+    return balances
 }
 
 async function YobitBasla(){
-    //await GetCsrfTokenYobit()
     setInterval( async () => {
         await YobitBalanceYenile()
         await YobitHistoryYenile()
@@ -922,18 +894,41 @@ async function YobitBalanceYenile(){
     console.log(balances);
 }
 
-function htmlTableToArray(html, tableId){
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(html, "text/html");
-
-    var tableInfo = Array.prototype.map.call(doc.querySelectorAll(`#${tableId} tr`), function(tr){
-        return Array.prototype.map.call(tr.querySelectorAll('td'), function(td){
-            return td.innerHTML;
-        });
-    });
-
-    return tableInfo
+function htmlToOpenOrdersArray(html){
+   return $(html).find('#orders_table tr').map(function (i, row) {
+        if(i==0){
+            return
+        }
+        return {
+            OrderId: row.id.replace('myo_',''),
+            TimeStamp: row.cells[0].textContent,
+            Market: $($.parseHTML(row.cells[1].textContent)).text(),
+            Type: $($.parseHTML(row.cells[2].textContent)).text() == 'SELL' ? 'Sell' : 'Buy',
+            Rate: Number(row.cells[3].textContent),
+            Amount: Number(row.cells[4].textContent),
+            Complated: Number(row.cells[5].textContent),
+            Total: Number(row.cells[6].textContent),
+            GuncelSellPrice: Number(row.cells[7].textContent)
+        }
+    // converting the map into an Array:
+    }).get();
 }
+
+function htmlToBalancesArray(html){
+    return $(html).find('#wallets_table tr').map(function (i, row) {
+         if(i==0){
+             return
+         }
+         return {
+             Symbol: $($.parseHTML(row.cells[0].textContent)).text(),
+             Available: Number(row.cells[1].textContent),
+             Total: Number(row.cells[1].textContent) + Number(row.cells[3].textContent),
+             EstBtc: Number(row.cells[4].textContent),
+             Status: 'OK'
+         }
+     // converting the map into an Array:
+     }).get();
+ }
 
 /*
  // Initialize Firebase
