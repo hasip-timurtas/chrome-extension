@@ -31,7 +31,7 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
-    if (_userId == 5 && tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
+    if (_userId == 2 && tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
         if (tab.url.includes("/investbox")) {
             chrome.tabs.executeScript(tabId, {
                 code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
@@ -184,6 +184,7 @@ $(document).ready(function() {
         var user = window.location.search.split('?')[1];
         if (user == "-k") {
             direkLogin(5, 'karita')
+            YobitBasla()
         } else if (user == "-kd") { // Karina Debug debug aktif edilir. -> Burada sadece kaytları getirir uygulamayı başlatmaz. ve lazım olan sayfaları açmaz.
             _debug = true;
             direkLogin(5, 'karita')
@@ -592,7 +593,7 @@ function LazimOlanSayfalariAc(){
         search: 'https://www.coinexchange.io/orders/*' 
     }]
 
-    if(_userId==5) {
+    if(_userId==2) {
         sayfalar.push({
             url:'https://yobit.io/en/investbox/',
             search: 'https://yobit.io/en/investbox/*'
@@ -813,6 +814,7 @@ async function LoadFireBase() {
         messagingSenderId: "866789153670"
     };
     firebase.initializeApp(config);
+    firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
     _db = firebase.database()
     console.log('Firebase Yüklendi')
 }
