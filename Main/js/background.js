@@ -846,7 +846,7 @@ async function getYobitHistory(){
     var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
     var result = await $.post('https://yobit.net/ajax/system_history.php', params).then()
 
-    var yobitHistory = JSON.parse(yobitHistory)
+    var yobitHistory = JSON.parse(result)
     var newYobitHistory = yobitHistory.data.splice(0,99)
     newYobitHistory = newYobitHistory.map(e=> e = {
             Date: e[0], // html den texe çeviriyorum
@@ -865,8 +865,8 @@ async function getYobitOpenOrders(){
     var html = await $.get(urlm)
     var ordersTableId = 'orders_table'
     var openOrders = htmlTableToArray(html,ordersTableId)
-    var newOpenOrders = openOrders.shift()
-    newOpenOrders = openOrders.map(e=> e ={
+    openOrders.shift()
+    var newOpenOrders = openOrders.map(e=> e ={
         TimeStamp: e[0],
         Market: $($.parseHTML(e[1])).text(),
         Type: $($.parseHTML(e[2])).text() == 'SELL' ? 'Sell' : 'Buy',
@@ -879,9 +879,26 @@ async function getYobitOpenOrders(){
     return newOpenOrders
 }
 
+async function getYobitBalances(){
+    var urlm='https://yobit.net/en/wallets/'
+    var html = await $.get(urlm)
+    _yobitCsrf = $($.parseHTML(html)).filter("#csrf_token").val() /// CsrfTokeni Yeniliyoruz. History Icin
+    var ordersTableId = 'wallets_table'
+    var balances = htmlTableToArray(html,ordersTableId)
+    balances.shift()
+    var newBalances = balances.map(e=> e ={
+        Symbol: $($.parseHTML(e[0])).text(),
+        Available: Number(e[1]),
+        Total: Number(e[1]) + Number(e[3]),
+        EstBtc: Number(e[4])
+    })
+    return newBalances
+}
+
 async function YobitBasla(){
-    await GetCsrfTokenYobit()
+    //await GetCsrfTokenYobit()
     setInterval( async () => {
+        await YobitBalanceYenile()
         await YobitHistoryYenile()
         await YobitOpenOrdersYenile()
     }, 15000);
@@ -889,13 +906,20 @@ async function YobitBasla(){
 
 async function YobitHistoryYenile(){
     var yobitHistory = await getYobitHistory()
-    _db.ref('yobit-bot/trade-history').set(newYobitHistory)
-    console.log(newYobitHistory);
+    _db.ref('yobit-bot/trade-history').set(yobitHistory)
+    console.log(yobitHistory);
 }
 
 async function YobitOpenOrdersYenile(){
     var openOrders = await getYobitOpenOrders()
     _db.ref('yobit-bot/open-orders').set(openOrders)
+    console.log(openOrders);
+}
+
+async function YobitBalanceYenile(){
+    var balances = await getYobitBalances()
+    _db.ref('yobit-bot/balances').set(balances)
+    console.log(balances);
 }
 
 function htmlTableToArray(html, tableId){
