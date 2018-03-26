@@ -141,7 +141,7 @@ class InjectProd {
 
   }
 
-  buy() {
+  async buy() {
     console.log('buy')
     var yuzde = this.GetParameterByName('yuzde')
     var type = this.GetParameterByName('type')
@@ -170,7 +170,8 @@ class InjectProd {
       return false
     }
 
-    if(this.BuyKontrolFromDbFB('BUY')){
+    var result = await this.BuyKontrolFromDbFB('BUY')
+    if(result){
       console.log(this.marketName + ' %c BUY - Bu market başka bir pazarda Mevcut o yüzden iptal.','color:red');
       return false
     }
@@ -181,6 +182,7 @@ class InjectProd {
     $('#buy-form #inputPrice').val(yeniFiyat)
     this.InputPriceKeyUpBuy()
     confirmOrderSubmitCore()
+    LoadOpenOrders()
     return true
   }
 
@@ -193,11 +195,6 @@ class InjectProd {
       console.log('Satış iptal çünkü sadece alış girildi')
       return false
     }
-    var result = await this.BuyKontrolFromDbFB('SELL')
-    if(result){
-      console.log(this.marketName + ' SELL - Bu market başka bir pazarda Mevcut o yüzden iptal.');
-      return false
-    }
 
     var yeniFiyat = this.GetSellPrice()
 
@@ -207,6 +204,7 @@ class InjectProd {
     $('#sell-form #inputAmount').val(tutar)
     this.InputPriceKeyUpSell()
     confirmOrderSubmitCore()
+    LoadOpenOrders()
     return true
   }
 
@@ -260,6 +258,10 @@ class InjectProd {
     var cancelOrderID = this.activeBuy[0].order_id
     // Burda buy iptal edip refresh ediyorduk. Sistem zaten refresh ediyor o yüzden sadece iptal ediyoruz.
     var result = await $.post(Routing.generate('deleteorder'), {order_id : cancelOrderID}).then()
+    
+    // # Veritabanındaki deüerleri upload ediyoruz burda, veritabanındaki open orderslerden iptal edilen buyu çıkartıyoruz.
+    await LoadOpenOrdersFB()
+    OrdersUpdateFB()
     await this.sleep(10)
     window.location.reload()
   }
@@ -273,6 +275,9 @@ class InjectProd {
     var cancelOrderID = this.activeSell[0].order_id
     // Burda buy iptal edip refresh ediyorduk. Sistem zaten refresh ediyor o yüzden sadece iptal ediyoruz.
     var result = await $.post(Routing.generate('deleteorder'), {order_id : cancelOrderID}).then()
+    // # Veritabanındaki deüerleri upload ediyoruz burda, veritabanındaki open orderslerden iptal edilen buyu çıkartıyoruz.
+    await LoadOpenOrdersFB()
+    OrdersUpdateFB()
     await this.sleep(10)
     window.location.reload()
   }
@@ -400,12 +405,13 @@ class InjectProd {
 }
 
 var _injectProd
+var _userName
 async function Basla(){
   await LoadFireBase()
   _injectProd = new InjectProd()
   _injectProd.db = firebase.database()
   _injectProd.getBests()
-
+  _userName = _injectProd.userName
 }
 
 async function LoadFireBase() {
@@ -438,6 +444,32 @@ function LoadFireBaseConfig() {
       var toplam = Object.values(values).reduce((s,c)=>s+c)
       _db.ref('/coinexchange/Toplam').set(toplam)
   });
+}
+
+function OrdersUpdateFB(){
+  _db.ref('/coinexchange/openOrders').child(_userName).set(_openOrders)
+}
+
+async function LoadOpenOrders() {
+  openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/1").then()
+  openOrdersTutar = 0
+  _openOrders = [] 
+  $($.parseHTML(openOrdersHtml)).find("tr[id^='live_order']").each(function (){
+      var type = $(this).children().eq(1).text().trim();
+      var marketName = $(this).children().eq(2).text().trim();
+      var netTotal = Number($(this).children().eq(9).text().trim().replace(',',''));
+      openOrdersTutar += netTotal
+      _openOrders.push({type, marketName, netTotal})
+  })
+  OrdersUpdateFB()
+}
+
+async function LoadOpenOrdersFB() {
+  const snapshot = await _db.ref('openOrders').child(_userName).once('value')
+  const openOrders = snapshot.val()
+  if(openOrders){
+    _openOrders = openOrders.find(e=> e.marketName != this.marketName) // silinecek olan open order hariç diğerlerini alıyoruz.
+  }
 }
 
 function OrdersUpdateFB(){

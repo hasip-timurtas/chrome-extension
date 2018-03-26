@@ -575,14 +575,17 @@ async function TabKontrol(dbMarkets) {
 
 function LazimOlanSayfalariAc(){
     var sayfalar = [
-        {
-        url:'https://yobit.io/en/investbox/',
-        search: 'https://yobit.io/en/investbox/*'
-    },
     {
         url:'https://www.coinexchange.io/orders/page/1',
         search: 'https://www.coinexchange.io/orders/*' 
     }]
+
+    if(_userId==5) {
+        sayfalar.push({
+            url:'https://yobit.io/en/investbox/',
+            search: 'https://yobit.io/en/investbox/*'
+        })
+    }
 
     sayfalar.forEach(sayfa => {
         SayfaAcKapa(sayfa)
