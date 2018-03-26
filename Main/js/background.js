@@ -64,7 +64,7 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
 
     if (tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {  
         if (tab.url.includes("/balances")) {
-            var openOrdersTutar = await LoadOpenOrders()
+            var openOrdersTutar = await LoadOpenOrdersForCoinexchangeBalance()
             
           chrome.tabs.executeScript(tabId, {
             code: `var toplamTutar = ${openOrdersTutar};
@@ -471,6 +471,18 @@ async function LoadOpenOrders() {
         _openOrders.push({type, marketName, netTotal})
     })
     OrdersUpdateFB()
+    return openOrdersTutar
+}
+
+async function LoadOpenOrdersForCoinexchangeBalance() {
+    openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/1").then()
+    openOrdersTutar = 0
+    $($.parseHTML(openOrdersHtml)).find("tr[id^='live_order']").each(function (){
+        var type = $(this).children().eq(1).text().trim();
+        var marketName = $(this).children().eq(2).text().trim();
+        var netTotal = Number($(this).children().eq(9).text().trim().replace(',',''));
+        openOrdersTutar += netTotal
+    })
     return openOrdersTutar
 }
 
