@@ -20,6 +20,7 @@ var _userDbMarketler = []
 var _Balances = []
 var _debug = false
 var _db
+var _yobitCsrf
 
 function UygulamayiBaslat() {
     _isPaused = false
@@ -801,13 +802,6 @@ function wsMarketData(market_id) {
     };
 }
 
-async function getYobitHistory(){
-    var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=105&search%5Bvalue%5D=&search%5Bregex%5D=false&action=bids&pair_id=0&currency_id=0&csrf_token=` + $('#csrf_token').val();
-    var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
-    var result = await $.post('https://yobit.net/ajax/system_history.php', params).then()
-    return result
-}
-
 LoadFireBase()
 async function LoadFireBase() {
     var config = {
@@ -840,8 +834,82 @@ function AllBalanceUpdateFB(){
     _db.ref('/coinexchange/allBalances').child(_userName).set(_Balances)
 }
 
+var _yobitCsrf
+async function GetCsrfTokenYobit(){
+    var urlm='https://yobit.net/'
+    var html = await $.get(urlm)
+    _yobitCsrf = $($.parseHTML(html)).filter("#csrf_token").val()
+}
 
+async function getYobitHistory(){
+    var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=105&search%5Bvalue%5D=&search%5Bregex%5D=false&action=bids&pair_id=0&currency_id=0&csrf_token=${_yobitCsrf}`
+    var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
+    var result = await $.post('https://yobit.net/ajax/system_history.php', params).then()
 
+    var yobitHistory = JSON.parse(yobitHistory)
+    var newYobitHistory = yobitHistory.data.splice(0,99)
+    newYobitHistory = newYobitHistory.map(e=> e = {
+            Date: e[0], // html den texe çeviriyorum
+            Market: $($.parseHTML(e[1])).text(), // aynı 
+            Type: $($.parseHTML(e[2])).text() == 'SELL' ? 'Sell' : 'Buy',
+            Rate: Number(e[3]),
+            Amount: Number(e[4]),
+            Total: Number(e[5])
+        }
+    )
+    return newYobitHistory
+}
+
+async function getYobitOpenOrders(){
+    var urlm='https://yobit.net/en/orders/'
+    var html = await $.get(urlm)
+    var ordersTableId = 'orders_table'
+    var openOrders = htmlTableToArray(html,ordersTableId)
+    var newOpenOrders = openOrders.shift()
+    newOpenOrders = openOrders.map(e=> e ={
+        TimeStamp: e[0],
+        Market: $($.parseHTML(e[1])).text(),
+        Type: $($.parseHTML(e[2])).text() == 'SELL' ? 'Sell' : 'Buy',
+        Rate: Number(e[3]),
+        Amount: Number(e[4]),
+        Complated: Number(e[4]),
+        Total: Number(e[5]),
+        GuncelSellPrice: Number(e[6])
+    })
+    return newOpenOrders
+}
+
+async function YobitBasla(){
+    await GetCsrfTokenYobit()
+    setInterval( async () => {
+        await YobitHistoryYenile()
+        await YobitOpenOrdersYenile()
+    }, 15000);
+}
+
+async function YobitHistoryYenile(){
+    var yobitHistory = await getYobitHistory()
+    _db.ref('yobit-bot/trade-history').set(newYobitHistory)
+    console.log(newYobitHistory);
+}
+
+async function YobitOpenOrdersYenile(){
+    var openOrders = await getYobitOpenOrders()
+    _db.ref('yobit-bot/open-orders').set(openOrders)
+}
+
+function htmlTableToArray(html, tableId){
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(html, "text/html");
+
+    var tableInfo = Array.prototype.map.call(doc.querySelectorAll(`#${tableId} tr`), function(tr){
+        return Array.prototype.map.call(tr.querySelectorAll('td'), function(td){
+            return td.innerHTML;
+        });
+    });
+
+    return tableInfo
+}
 
 /*
  // Initialize Firebase
