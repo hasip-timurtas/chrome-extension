@@ -262,7 +262,6 @@ function HataliSayfalariYenile() {
 }
 
 async function Basla() {
-    LoadFireBase();
     await LoadMarkets();
     GetMarkets(); // With UserName
 
@@ -797,6 +796,7 @@ async function getYobitHistory(){
     return result
 }
 
+LoadFireBase()
 async function LoadFireBase() {
     var config = {
         apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
