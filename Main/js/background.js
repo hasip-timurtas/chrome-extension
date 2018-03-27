@@ -184,7 +184,7 @@ $(document).ready(function() {
         var user = window.location.search.split('?')[1];
         if (user == "-k") {
             direkLogin(5, 'karita')
-            YobitBasla()
+            //YobitBasla()
         } else if (user == "-kd") { // Karina Debug debug aktif edilir. -> Burada sadece kaytları getirir uygulamayı başlatmaz. ve lazım olan sayfaları açmaz.
             _debug = true;
             direkLogin(5, 'karita')
