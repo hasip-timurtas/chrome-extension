@@ -874,7 +874,7 @@ async function getYobitHistory(){
 async function getYobitOpenOrders(){
     var urlm='https://yobit.net/en/orders/'
     var html = await $.get(urlm)
-    var openOrders = htmlToOpenOrdersArray($.parseHTML(html))
+    var openOrders = htmlToOpenOrdersArray(html)
     return openOrders
 }
 
@@ -932,7 +932,9 @@ function htmlToOpenOrdersArray(html){
             Amount: Number(row.cells[4].textContent),
             Complated: Number(row.cells[5].textContent),
             Total: Number(row.cells[6].textContent),
+            Remaining: Number(row.cells[4].textContent) - Number(row.cells[5].textContent),
             GuncelSellPrice: Number(row.cells[7].textContent)
+
         }
     // converting the map into an Array:
     }).get();
