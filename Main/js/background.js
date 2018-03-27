@@ -827,7 +827,7 @@ async function LoadConsoleTables(){
     totalEstBalance = Number(totalEstBalance.toFixed(8))
 
     console.log('%c BALANCES', 'background: #222; color: yellow')
-    console.table(yobitBot["%c balances"])
+    console.table(yobitBot["balances"])
     console.log('%c Total Estimated Balance: %s', 'color: blue',totalEstBalance);
     console.log('%c ORDERS', 'background: #222; color: yellow')
     console.table(openOrdersYobit = yobitBot["open-orders"])
@@ -855,7 +855,7 @@ function AllBalanceUpdateFB(){
 async function getYobitHistory(){
     var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=105&search%5Bvalue%5D=&search%5Bregex%5D=false&action=bids&pair_id=0&currency_id=0&csrf_token=${_yobitCsrf}`
     var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
-    var result = await $.post('https://yobit.io/ajax/system_history.php', params).then()
+    var result = await $.post('https://yobit.net/ajax/system_history.php', params).then()
 
     var yobitHistory = JSON.parse(result)
     var newYobitHistory = yobitHistory.data.splice(0,99)
@@ -872,14 +872,14 @@ async function getYobitHistory(){
 }
 
 async function getYobitOpenOrders(){
-    var urlm='https://yobit.io/en/orders/'
+    var urlm='https://yobit.net/en/orders/'
     var html = await $.get(urlm)
     var openOrders = htmlToOpenOrdersArray($.parseHTML(html))
     return openOrders
 }
 
 async function getYobitBalances(){
-    var urlm='https://yobit.io/en/wallets/'
+    var urlm='https://yobit.net/en/wallets/'
     var html = await $.get(urlm)
     _yobitCsrf = $(html).filter("#csrf_token").val()  /// CsrfTokeni Yeniliyoruz. History Icin
     var balances = htmlToBalancesArray(html)
