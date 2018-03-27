@@ -896,20 +896,26 @@ async function YobitBasla(){
 
 async function YobitHistoryYenile(){
     var yobitHistory = await getYobitHistory()
-    _db.ref('yobit-bot/trade-history').set(yobitHistory)
-    console.log(yobitHistory);
+    if(yobitHistory.length > 0){
+        _db.ref('yobit-bot/trade-history').set(yobitHistory)
+        console.log(yobitHistory);
+    }
 }
 
 async function YobitOpenOrdersYenile(){
     var openOrders = await getYobitOpenOrders()
-    _db.ref('yobit-bot/open-orders').set(openOrders)
-    console.log(openOrders);
+    if(openOrders.length > 0){
+        _db.ref('yobit-bot/open-orders').set(openOrders)
+        console.log(openOrders);
+    }
 }
 
 async function YobitBalanceYenile(){
     var balances = await getYobitBalances()
-    _db.ref('yobit-bot/balances').set(balances)
-    console.log(balances);
+    if(balances.length > 0){
+        _db.ref('yobit-bot/balances').set(balances)
+        console.log(balances);
+    }
 }
 
 function htmlToOpenOrdersArray(html){
@@ -947,6 +953,144 @@ function htmlToBalancesArray(html){
      // converting the map into an Array:
      }).get();
  }
+
+async function getYobitMarketNames(symbol) {
+    var abc = await $.get('https://yobit.net/api/3/info')
+    abc = JSON.parse(abc)
+    return Object.keys(abc.pairs).filter(e => e).filter(e => e.includes('_' + symbol)) // örnek: doge marketleri için _doge
+}
+
+async function GetYobitMarkets() {
+    var symbols = await getYobitMarketNames('doge');
+    let coinler = []
+    let tickerUrls = []
+    symbols.forEach((e, idx, array) => {
+        if (coinler.length > 50) {
+            tickerUrls.push(coinler)
+            coinler = []
+        }
+        coinler.push(e)
+        if (idx === array.length - 1) { // Eğer son kayıt ise
+            tickerUrls.push(coinler)
+        }
+    })
+    var yobitUrl = 'https://yobit.net/api/3/ticker/'
+    let allMarkets = []
+    for (let tickerUrl of tickerUrls) {
+        console.log(tickerUrl);
+
+        var url = tickerUrl.join('-')
+        var yeniYobitUrl = yobitUrl + url
+        console.log(yeniYobitUrl);
+        await $.get(yeniYobitUrl).then(markets => {
+            Object.keys(markets).forEach(key => {
+                var newMrkt = parseTicker(markets[key])
+                const guncelMarket = CommonFormat('market', newMrkt)
+                allMarkets.push(guncelMarket)
+            })
+        }).catch(e => {
+            console.log(e)
+        })
+        break;
+    }
+
+    this.markets = allMarkets
+    return allMarkets
+}
+
+function CommonFormat(type, data) {
+    switch (type) {
+        case 'market':
+            return {
+                AskPrice: data.ask,
+                BidPrice: data.bid,
+                High: data.high,
+                Label: data.symbol,
+                LastPrice: data.last,
+                Low: data.low,
+                Change: data.change,
+                Volume: data.quoteVolume, //BTCVOLUME
+            }
+            break;
+        case 'balance':
+            return {
+                "Symbol": data.symbol,
+                "Total": data.balance.total,
+                "Available": data.balance.free,
+                "Status": "OK"
+            }
+            break;
+        case 'orderBook':
+            // return Object.keys(response).map(key => this.CommonFormat('orderBook', {market: key, orderBook: response[key]}))
+            data.orderBook.asks = data.orderBook.asks.map(e => {
+                return {
+                    Price: e[0],
+                    Amount: e[1]
+                }
+            })
+            data.orderBook.bids = data.orderBook.bids.map(e => {
+                return {
+                    Price: e[0],
+                    Amount: e[1]
+                }
+            })
+
+            return {
+                "Market": data.market,
+                "Buy": data.orderBook.bids,
+                "Sell": data.orderBook.asks,
+            }
+            break;
+        case 'tradeHistory':
+            return {
+                "TradeId": data.id,
+                "Type": data.side.replace(/\b\w/g, l => l.toUpperCase()),
+                "Rate": data.price,
+                "Amount": data.amount,
+            }
+            break;
+        case 'orders':
+            return {
+                "OrderId": data.id,
+                "Market": data.symbol,
+                "Type": data.side.replace(/\b\w/g, l => l.toUpperCase()),
+                "Rate": data.price,
+                "Amount": data.remaining,
+                "Remaining": data.remaining
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+function parseTicker (ticker, market = undefined) {
+    let timestamp = ticker['updated'] * 1000;
+    let symbol = undefined;
+    if (market)
+        symbol = market['symbol'];
+    return {
+        'symbol': symbol,
+        'timestamp': timestamp,
+        'datetime': timestamp,
+        'high': this.safeFloat (ticker, 'high'),
+        'low': this.safeFloat (ticker, 'low'),
+        'bid': this.safeFloat (ticker, 'buy'),
+        'ask': this.safeFloat (ticker, 'sell'),
+        'vwap': undefined,
+        'open': undefined,
+        'close': undefined,
+        'first': undefined,
+        'last': this.safeFloat (ticker, 'last'),
+        'change': undefined,
+        'percentage': undefined,
+        'average': this.safeFloat (ticker, 'avg'),
+        'baseVolume': this.safeFloat (ticker, 'vol_cur'),
+        'quoteVolume': this.safeFloat (ticker, 'vol'),
+        'info': ticker,
+    };
+}
+
 
 /*
  // Initialize Firebase
