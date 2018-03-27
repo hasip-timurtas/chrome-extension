@@ -816,7 +816,23 @@ async function LoadFireBase() {
     firebase.initializeApp(config);
     firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
     _db = firebase.database()
-    console.log('Firebase Yüklendi')
+    LoadConsoleTables()
+}
+
+async function LoadConsoleTables(){
+    const yobitBotRef = _db.ref('yobit-bot')
+    const snapshot = await yobitBotRef.once('value')
+    const yobitBot = snapshot.val()
+    var totalEstBalance = yobitBot["balances"].map(e=> e.EstBtc).reduce((s,c)=> s+c); 
+    totalEstBalance = Number(totalEstBalance.toFixed(8))
+
+    console.log('%c BALANCES', 'background: #222; color: yellow')
+    console.table(yobitBot["%c balances"])
+    console.log('%c Total Estimated Balance: %s', 'color: blue',totalEstBalance);
+    console.log('%c ORDERS', 'background: #222; color: yellow')
+    console.table(openOrdersYobit = yobitBot["open-orders"])
+    console.log('%c HISTORY', 'background: #222; color: yellow')
+    console.table(tradeHistoryYobit = yobitBot["trade-history"].splice(0,15))// son 15 kayıt
 }
 
 function BalanceUpdateFB(){
