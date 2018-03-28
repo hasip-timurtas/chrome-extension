@@ -832,7 +832,7 @@ async function LoadConsoleTables(){
     console.log('%c ORDERS', 'background: #222; color: yellow')
     console.table(openOrdersYobit = yobitBot["open-orders"])
     console.log('%c HISTORY', 'background: #222; color: yellow')
-    console.table(tradeHistoryYobit = yobitBot["trade-history"].splice(0,15))// son 15 kayıt
+    console.table(tradeHistoryYobit = yobitBot["trade-history"].splice(0,100))// son 15 kayıt
 }
 
 function BalanceUpdateFB(){
