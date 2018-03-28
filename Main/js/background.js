@@ -888,11 +888,12 @@ async function getYobitBalances(){
 }
 
 async function YobitBasla(){
-    setInterval( async () => {
+    while (true) {
         await YobitBalanceYenile()
         await YobitHistoryYenile()
         await YobitOpenOrdersYenile()
-    }, 15000);
+        await sleep(1)
+    }
 }
 
 async function YobitHistoryYenile(){
