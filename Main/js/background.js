@@ -856,7 +856,13 @@ function AllBalanceUpdateFB(){
 async function getYobitHistory(){
     var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=105&search%5Bvalue%5D=&search%5Bregex%5D=false&action=bids&pair_id=0&currency_id=0&csrf_token=${_yobitCsrf}`
     var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
-    var result = await $.post('https://yobit.io/ajax/system_history.php', params).then()
+    
+    var result = []
+    await $.post('https://yobit.io/ajax/system_history.php', params).done((data)=>{
+        result = data
+    }).fail((jqHRX, textStatus, errorThrown)=>{
+        console.log(jqHRX, textStatus, errorThrown)
+    })
 
     var yobitHistory = JSON.parse(result)
     var newYobitHistory = yobitHistory.data
@@ -889,9 +895,9 @@ async function getYobitBalances(){
 
 async function YobitBasla(){
     while (true) {
-        await YobitBalanceYenile()
-        await YobitHistoryYenile()
-        await YobitOpenOrdersYenile()
+        await YobitBalanceYenile().catch(e=> console.log(e))
+        await YobitHistoryYenile().catch(e=> console.log(e))
+        await YobitOpenOrdersYenile().catch(e=> console.log(e))
         await sleep(1)
     }
 }
