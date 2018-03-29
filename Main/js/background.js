@@ -192,6 +192,8 @@ $(document).ready(function() {
             direkLogin(2, 'hasip')
         } else if (user == "m") {
             direkLogin(3, 'musa')
+        }else if(user == 'ybt'){
+            YobitBasla();
         }
 
         $("#btnLogin").click(function() {
@@ -894,11 +896,20 @@ async function getYobitBalances(){
 }
 
 async function YobitBasla(){
+    $("#loginArea").hide();
+    $("#sonuclar").show();
+    $("#sayac").show();
+    var sayac = 1 
     while (true) {
+        $("#sayac").html(sayac);
         await YobitBalanceYenile().catch(e=> console.log(e))
         await YobitHistoryYenile().catch(e=> console.log(e))
         await YobitOpenOrdersYenile().catch(e=> console.log(e))
         await sleep(1)
+        sayac++
+        if(sayac == 30){
+            window.location.reload()
+        }
     }
 }
 
