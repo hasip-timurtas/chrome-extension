@@ -826,16 +826,21 @@ async function LoadConsoleTables(){
     const _yobitBotRef = _db.ref('yobit-bot')
     const snapshot = await _yobitBotRef.once('value')
     _yobitBot = snapshot.val()
+
     var totalEstBalance = _yobitBot["balances"].map(e=> e.EstBtc).reduce((s,c)=> s+c); 
     totalEstBalance = Number(totalEstBalance.toFixed(8))
     var tradeHistoryYobit = _yobitBot["trade-history"]
+    var hatalar = Object.keys(_yobitBot["hatalar"]).map(e=> _yobitBot["hatalar"][e]);
+
     console.log('%c BALANCES', 'background: #222; color: yellow')
     console.table(_yobitBot["balances"])
     console.log('%c Total Estimated Balance: %s', 'color: blue',totalEstBalance);
     console.log('%c ORDERS', 'background: #222; color: yellow')
     console.table(_yobitBot["open-orders"])
     console.log('%c HISTORY', 'background: #222; color: yellow')
-    console.table(tradeHistoryYobit)// son 15 kayıt
+    console.table(tradeHistoryYobit)
+    console.log(tradeHistoryYobit.groupBy('Market'))// son 15 kayıt
+    console.log(hatalar.groupBy('err'))
 }
 
 function BalanceUpdateFB(){
@@ -1112,6 +1117,16 @@ function parseTicker (ticker, market = undefined) {
     };
 }
 
+// Groupby örneğin : history.groupBy('Market') --> historyi marketlere göre ayırır.
+Array.prototype.groupBy = function(prop) {
+    return this.reduce(function(groups, item) {
+      const val = item[prop]
+      groups[val] = groups[val] || []
+      groups[val].push(item)
+      return groups
+    }, {})
+}
+  
 
 /*
  // Initialize Firebase
