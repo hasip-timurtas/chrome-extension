@@ -826,14 +826,18 @@ async function LoadConsoleTables(){
     const _yobitBotRef = _db.ref('yobit-bot')
     const snapshot = await _yobitBotRef.once('value')
     _yobitBot = snapshot.val()
-
+    var dogeBalance = _yobitBot["balances"].find(e=> e.Symbol=='DOGE').Total
+    var ordersToplam = _yobitBot["open-orders"].map(e=> e.Total).reduce((s,c)=> s+c)
+    var toplamBalance = dogeBalance + ordersToplam
     var totalEstBalance = _yobitBot["balances"].map(e=> e.EstBtc).reduce((s,c)=> s+c); 
     totalEstBalance = Number(totalEstBalance.toFixed(8))
     var tradeHistoryYobit = _yobitBot["trade-history"]
     var hatalar = Object.keys(_yobitBot["hatalar"]).map(e=> _yobitBot["hatalar"][e]);
+    
 
     console.log('%c BALANCES', 'background: #222; color: yellow')
     console.table(_yobitBot["balances"])
+    console.log('%c Total DOGE: %s', 'color: blue',toplamBalance);
     console.log('%c Total Estimated Balance: %s', 'color: blue',totalEstBalance);
     console.log('%c ORDERS', 'background: #222; color: yellow')
     console.table(_yobitBot["open-orders"])
