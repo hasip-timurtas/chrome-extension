@@ -916,6 +916,7 @@ async function YobitBasla(){
         await YobitHistoryYenile().catch(e=> console.log(e))
         await YobitOpenOrdersYenile().catch(e=> console.log(e))
         await sleep(1)
+        _db.ref('yobit-bot/sayac').set(sayac) // bu değer her değiştiğinde serverdeki bot marketler için çalışacak. :) 
         sayac++
         if(sayac == 30){
             window.location.reload()
