@@ -33,6 +33,8 @@ async function CheckInvest(){
     const openOrdersRef = _db.ref('/yobit/yatirim')
     const snapshot = await openOrdersRef.once('value')
     const dbInvests = snapshot.val()
+    console.log(dbInvests,investCoinler);
+    
     const result = await ObjectArrayEqual(dbInvests, investCoinler)
     if(!result){
         // Yenisi ile eskisiyle arasında fark varsa dbye ekle.
@@ -51,6 +53,7 @@ async function Start(){
         var result = JSON.parse(data);
         //SendInvestBoxNumber(result.recordsFiltered)
         var sayfaSayisi = Math.ceil(result.recordsFiltered / 7) // Her sayfada 7 tane invest coin var, ana toplam invest coin sayısını 7 ye bölüp ceil alıyoruz. örn: 7.2 çıksa bile 8 yapar. buda 8 sayfa var demek.
+        _db.ref('/yobit/investCount').set(result.recordsFiltered)
         Basla(sayfaSayisi)
     })
 }

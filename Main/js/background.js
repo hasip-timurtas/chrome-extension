@@ -31,7 +31,7 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
-    if (_userId == 2 && tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
+    if (_userId == 5 && tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
         if (tab.url.includes("/investbox")) {
             chrome.tabs.executeScript(tabId, {
                 code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
@@ -595,7 +595,7 @@ function LazimOlanSayfalariAc(){
         search: 'https://www.coinexchange.io/orders/*' 
     }]
 
-    if(_userId==2) {
+    if(_userId == 5) {
         sayfalar.push({
             url:'https://yobit.io/en/investbox/',
             search: 'https://yobit.io/en/investbox/*'
@@ -915,7 +915,6 @@ async function YobitBasla(){
         await YobitBalanceYenile().catch(e=> console.log(e))
         await YobitHistoryYenile().catch(e=> console.log(e))
         await YobitOpenOrdersYenile().catch(e=> console.log(e))
-        await sleep(1)
         _db.ref('yobit-bot/sayac').set(sayac) // bu değer her değiştiğinde serverdeki bot marketler için çalışacak. :) 
         sayac++
         if(sayac == 30){
