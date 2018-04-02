@@ -819,6 +819,7 @@ async function LoadFireBase() {
     firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
     _db = firebase.database()
     LoadConsoleTables()
+    //LoadMessaging()
 }
 
 var _yobitBot
@@ -1130,7 +1131,48 @@ Array.prototype.groupBy = function(prop) {
       return groups
     }, {})
 }
-  
+
+function LoadMessaging(){
+    const messaging = firebase.messaging();
+    messaging.usePublicVapidKey("BMp22N-6qaqEo4dFjN_8xuC0zDuHBIAaR2zOCXnp643VC_Myj2LLpWcUWyks84MgeowXplaDvq8MTZlyqBWStNU");
+    messaging.requestPermission().then(function() {
+        console.log('Notification permission granted.');
+        // TODO(developer): Retrieve an Instance ID token for use with FCM.
+        // ...
+    }).catch(function(err) {
+        console.log('Unable to get permission to notify.', err);
+    });
+
+
+    messaging.getToken().then(function(currentToken) {
+        if (currentToken) {
+            console.log(currentToken)
+        } else {
+            // Show permission request.
+            console.log('No Instance ID token available. Request permission to generate one.');
+        }
+    }).catch(function(err) {
+        console.log('An error occurred while retrieving token. ', err);
+    });
+
+
+    // Callback fired if Instance ID token is updated.
+    messaging.onTokenRefresh(function() {
+        messaging.getToken().then(function(refreshedToken) {
+            console.log('Token refreshed.');
+            console.log(refreshedToken);
+            //sendTokenToServer(refreshedToken);
+        }).catch(function(err) {
+            console.log('Unable to retrieve refreshed token ', err);
+        });
+    });
+
+    messaging.onMessage(function(payload) {
+    console.log('Message received. ', payload);
+    // ...
+    });
+
+}
 
 /*
  // Initialize Firebase
