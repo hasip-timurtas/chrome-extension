@@ -53,7 +53,7 @@ async function Start(){
         var result = JSON.parse(data);
         //SendInvestBoxNumber(result.recordsFiltered)
         var sayfaSayisi = Math.ceil(result.recordsFiltered / 7) // Her sayfada 7 tane invest coin var, ana toplam invest coin sayısını 7 ye bölüp ceil alıyoruz. örn: 7.2 çıksa bile 8 yapar. buda 8 sayfa var demek.
-        _db.ref('/yobit/investCount').set(result.recordsFiltered)
+        //_db.ref('/yobit/investCount').set(result.recordsFiltered)
         Basla(sayfaSayisi)
     })
 }
