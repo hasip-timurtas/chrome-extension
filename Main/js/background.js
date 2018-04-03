@@ -827,7 +827,7 @@ async function LoadConsoleTables(){
     const _yobitBotRef = _db.ref('yobit-bot')
     const snapshot = await _yobitBotRef.once('value')
     _yobitBot = snapshot.val()
-    var dogeBalance = _yobitBot["balances"].find(e=> e.Symbol=='DOGE').Total
+    var dogeBalance = _yobitBot["balances"].find(e=> e.Symbol=='DOGE').Available
     var ordersToplam = _yobitBot["open-orders"].map(e=> e.Total).reduce((s,c)=> s+c)
     var toplamBalance = dogeBalance + ordersToplam
     var totalEstBalance = _yobitBot["balances"].map(e=> e.EstBtc).reduce((s,c)=> s+c); 
