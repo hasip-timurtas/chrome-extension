@@ -835,7 +835,7 @@ async function LoadConsoleTables(){
     var tradeHistoryYobit = _yobitBot["trade-history"]
     var hatalar = Object.keys(_yobitBot["hatalar"]).map(e=> _yobitBot["hatalar"][e]);
     
-
+    // TODO : Bazen değerler farklı geliyor 
     console.log('%c BALANCES', 'background: #222; color: yellow')
     console.table(_yobitBot["balances"])
     console.log('%c Total DOGE: %s', 'color: blue',toplamBalance);
