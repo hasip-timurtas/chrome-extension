@@ -25,9 +25,8 @@
 
                 firebase.initializeApp(config);
 				firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
-                getBalance()
+                
                 async function getBalance() {
-
                     var _db = firebase.database()
                     var balances = await _db.ref('yobit-bot/balances').once('value').then(e=> e.val())
                     var dogeBalance = balances.find(e=> e.Symbol == 'DOGE')
@@ -57,6 +56,8 @@
                 const numberWithCommas = (x) => {
                     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
                 }
+                // TODO order list ekle.
+                getBalance()
             }
         </script>
 </body>
