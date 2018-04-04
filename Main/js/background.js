@@ -31,15 +31,6 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
-    if (_userId == 5 && tab.url.includes("https://yobit.io") && changeInfo.status === "complete" && tab.status == 'complete') {
-        if (tab.url.includes("/investbox")) {
-            chrome.tabs.executeScript(tabId, {
-                code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/YByatirim.js?v='+ Math.random(); document.head.appendChild(i);`,
-                runAt: "document_end"
-            });
-        }
-    }
-
     if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete" && tab.status == 'complete') {
         if (tab.url.includes("/Exchange?market=")) {
             chrome.tabs.executeScript(tabId, {
@@ -272,6 +263,7 @@ async function Basla() {
     if(!_debug){ // Debug modda değilse aşağıdaki fonksiyonları çağır
         SayaciAktifEt();    
         LazimOlanSayfalariAc();
+        YobitInvestKontrol(); // userId == 5 ise çalışır.
        // _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
        _anaSayac = setTimeout(BackgroundYenile, 1000 * _sayacSuresi);
     }
@@ -594,14 +586,6 @@ function LazimOlanSayfalariAc(){
         url:'https://www.coinexchange.io/orders/page/1',
         search: 'https://www.coinexchange.io/orders/*' 
     }]
-
-    if(_userId == 5) {
-        sayfalar.push({
-            url:'https://yobit.io/en/investbox/',
-            search: 'https://yobit.io/en/investbox/*'
-        })
-    }
-
     sayfalar.forEach(sayfa => {
         SayfaAcKapa(sayfa)
     });
@@ -1171,7 +1155,28 @@ function LoadMessaging(){
     console.log('Message received. ', payload);
     // ...
     });
+}
 
+function YobitInvestKontrol(){
+    if(_userId != 5){
+        return
+    }
+    // Investbox coinleri ekler
+    var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=350&search%5Bvalue%5D=&search%5Bregex%5D=false&action=list_boxes&csrf_token=`
+    var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
+    var investBoxUrl = "https://yobit.net/ajax/system_investbox.php"  
+    $.post(investBoxUrl, params).done(data => {
+            var result = JSON.parse(data);
+            result = result.data.map(e=> {
+                return {
+                    yuzde: e[0],
+                    period: e[1],
+                    coinName: $($.parseHTML(e[5])).first().text().trim()
+                }
+            })
+
+            _db.ref('/yobit/yatirim').set(result)
+    })
 }
 
 /*
