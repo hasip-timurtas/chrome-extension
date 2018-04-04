@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://www.gstatic.com/firebasejs/4.12.1/firebase.js"></script>
+</head>
+<body>
+    <table id="result" border="1" width="300">
+    </table>
+    <script>
+            var user = document.URL.split('?').pop()
+            if(user == 'h') {
+                  // Initialize Firebase
+                var config = {
+                    apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
+                    authDomain: "firem-b3432.firebaseapp.com",
+                    databaseURL: "https://firem-b3432.firebaseio.com",
+                    projectId: "firem-b3432",
+                    storageBucket: "firem-b3432.appspot.com",
+                    messagingSenderId: "866789153670"
+                };
+
+                firebase.initializeApp(config);
+				firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
+                getBalance()
+                async function getBalance() {
+
+                    var _db = firebase.database()
+                    var balances = await _db.ref('yobit-bot/balances').once('value').then(e=> e.val())
+                    var dogeBalance = balances.find(e=> e.Symbol == 'DOGE')
+                    dogeBalance = parseInt(dogeBalance.Available)
+
+                    var openOrders = await _db.ref('yobit-bot/open-orders').once('value').then(e=> e.val())
+                    var ordersToplam = openOrders.map(e=> e.Total).reduce((s,c)=> s+c)
+                    ordersToplam = parseInt(ordersToplam)
+                    var anaToplam = dogeBalance + ordersToplam
+        
+                    var html = `<tr>
+                                    <td>Balance</td>
+                                    <th>${numberWithCommas(dogeBalance)}</th>
+                                </tr>
+                                <tr>
+                                    <td>Orders Toplam</td>
+                                    <th>${numberWithCommas(ordersToplam)}</th>
+                                </tr>
+                                <tr style="width:100px">
+                                    <td><strong>Ana Toplam </strong></td>
+                                    <th>${numberWithCommas(anaToplam)}</th>
+                                </tr>`
+                                
+                    document.getElementById("result").innerHTML = html;
+                }
+
+                const numberWithCommas = (x) => {
+                    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+            }
+        </script>
+</body>
+</html>
