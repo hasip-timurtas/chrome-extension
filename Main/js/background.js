@@ -827,15 +827,15 @@ async function LoadConsoleTables(){
     var hatalar = Object.keys(_yobitBot["hatalar"]).map(e=> _yobitBot["hatalar"][e]);
     var cssAyar = "font-weight:bold; font-size:15px"
     // TODO : Bazen değerler farklı geliyor 
+  
+    console.log('%c HISTORY', 'background: #222; color: yellow')
+    console.table(tradeHistoryYobit)
     console.log('%c BALANCES', 'background: #222; color: yellow')
     console.table(_yobitBot["balances"])
     console.log('%c ORDERS', 'background: #222; color: yellow')
     console.table(_yobitBot["open-orders"])
-    console.log('%c HISTORY', 'background: #222; color: yellow')
-    console.table(tradeHistoryYobit)
     console.log(tradeHistoryYobit.groupBy('Market'))// son 15 kayıt
     console.log(hatalar.groupBy('err'))
-    
     console.log('%c Total Estimated Balance: %s', cssAyar, totalEstBalance);
     console.log('%c Doge Balance: %s', cssAyar, numberWithCommas(dogeBalance));
     console.log('%c Total DOGE: %s', cssAyar, numberWithCommas(toplamBalance));
