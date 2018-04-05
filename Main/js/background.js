@@ -808,28 +808,38 @@ async function LoadFireBase() {
 
 var _yobitBot
 async function LoadConsoleTables(){
+    const numberWithCommas = (x) => {
+        x = parseInt(x)
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
     const _yobitBotRef = _db.ref('yobit-bot')
     const snapshot = await _yobitBotRef.once('value')
     _yobitBot = snapshot.val()
     var dogeBalance = _yobitBot["balances"].find(e=> e.Symbol=='DOGE').Available
     var ordersToplam = _yobitBot["open-orders"].map(e=> e.Total).reduce((s,c)=> s+c)
+    var ederleri = _yobitBot["open-orders"].map(e=> e.Ederi).reduce((s,c)=> s+c)
     var toplamBalance = dogeBalance + ordersToplam
+    var tolamEderi = ederleri + dogeBalance
     var totalEstBalance = _yobitBot["balances"].map(e=> e.EstBtc).reduce((s,c)=> s+c); 
     totalEstBalance = Number(totalEstBalance.toFixed(8))
     var tradeHistoryYobit = _yobitBot["trade-history"]
     var hatalar = Object.keys(_yobitBot["hatalar"]).map(e=> _yobitBot["hatalar"][e]);
-    
+    var cssAyar = "font-weight:bold; font-size:15px"
     // TODO : Bazen değerler farklı geliyor 
     console.log('%c BALANCES', 'background: #222; color: yellow')
     console.table(_yobitBot["balances"])
-    console.log('%c Total DOGE: %s', 'color: blue',toplamBalance);
-    console.log('%c Total Estimated Balance: %s', 'color: blue',totalEstBalance);
     console.log('%c ORDERS', 'background: #222; color: yellow')
     console.table(_yobitBot["open-orders"])
     console.log('%c HISTORY', 'background: #222; color: yellow')
     console.table(tradeHistoryYobit)
     console.log(tradeHistoryYobit.groupBy('Market'))// son 15 kayıt
     console.log(hatalar.groupBy('err'))
+    
+    console.log('%c Total Estimated Balance: %s', cssAyar, totalEstBalance);
+    console.log('%c Doge Balance: %s', cssAyar, numberWithCommas(dogeBalance));
+    console.log('%c Total DOGE: %s', cssAyar, numberWithCommas(toplamBalance));
+    console.log('%c Total Ederi: %s', cssAyar, numberWithCommas(tolamEderi));
 }
 
 function BalanceUpdateFB(){
@@ -850,7 +860,7 @@ function AllBalanceUpdateFB(){
 }
 
 async function getYobitHistory(){
-    var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=105&search%5Bvalue%5D=&search%5Bregex%5D=false&action=bids&pair_id=0&currency_id=0&csrf_token=${_yobitCsrf}`
+    var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=275&search%5Bvalue%5D=&search%5Bregex%5D=false&action=bids&pair_id=0&currency_id=0&csrf_token=${_yobitCsrf}`
     var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
     
     var result = []
@@ -946,7 +956,8 @@ function htmlToOpenOrdersArray(html){
             Complated: Number(row.cells[5].textContent),
             Total: Number(row.cells[6].textContent),
             Remaining: Number(row.cells[4].textContent) - Number(row.cells[5].textContent),
-            GuncelSellPrice: Number(row.cells[7].textContent)
+            GuncelBuyPrice: Number(row.cells[7].textContent),
+            Ederi: Number(row.cells[7].textContent) * Number(row.cells[4].textContent)
 
         }
     // converting the map into an Array:
