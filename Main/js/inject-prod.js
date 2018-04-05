@@ -414,6 +414,7 @@ async function Basla(){
   _userName = _injectProd.userName
 }
 
+
 async function LoadFireBase() {
   //chrome.extension.getURL('/js/dll/firebase.js')
   await $.getScript('https://www.gstatic.com/firebasejs/4.12.0/firebase.js')
@@ -449,7 +450,7 @@ function LoadFireBaseConfig() {
 function OrdersUpdateFB(){
   _db.ref('/coinexchange/openOrders').child(_userName).set(_openOrders)
 }
-
+var _openOrders =[]
 async function LoadOpenOrders() {
   openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/1").then()
   openOrdersTutar = 0
