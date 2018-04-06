@@ -377,7 +377,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     })
 
     _kontroleUyanlar = _userDbMarketler.filter(e => {
-        e.yuzde = 15
+        e.yuzde = 30
         e.amount = _Balances.find(b=> b.symbol == e.name.split('/')[0]) || 0
         e.openOrders = _openOrders.filter(o=> o.marketName == e.name);
         if (e.guncelMarket.Volume >= 1000000) {
