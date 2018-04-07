@@ -226,7 +226,7 @@ class InjectProd {
   SellBozsunMu() { // Yüzde farkı için
     var alimSatimYuzdeFarki = ((this.activeSell[0].price - this.sonBuyPrice) / this.sonBuyPrice * 100)
     var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 2  // 3 te 2 si fiyatına pazara koyacak.
-    if (alimSatimYuzdeFarki > yuzde ) { // Eğer güncel sell price ile son buy price arasındaki fark yüzdemizden fazla ise bozsun, bizim istediğimiz yüzde ile tekrar kursunç. Yüzde azalırsa sell de üste çıkarız.
+    if (alimSatimYuzdeFarki != yuzde ) { // Eğer güncel sell price ile son buy price arasındaki fark yüzdemizden fazla ise bozsun, bizim istediğimiz yüzde ile tekrar kursunç. Yüzde azalırsa sell de üste çıkarız.
       return true
     }else{
       return false
