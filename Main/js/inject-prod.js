@@ -213,20 +213,20 @@ class InjectProd {
     var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 2  // 3 te 2 si fiyatına pazara koyacak.
     // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
-    var zararinaSat = this.GetParameterByName('zararinaSat')
+    //var zararinaSat = this.GetParameterByName('zararinaSat')
     
     var alimSatimYuzdeFarki = ((satacagiFiyat - this.sonBuyPrice) / this.sonBuyPrice * 100)
-    if (alimSatimYuzdeFarki < yuzde )
-      return  this.sonBuyPrice + (this.sonBuyPrice / 100 * yuzde)
-  
-    // Zararına sat / son buy yoksa yada alım satım arasında minimumdan büyük fark varsa bu üç koşuld a güncel price -1 giriyoruz.
-    return satacagiFiyat
+    if (alimSatimYuzdeFarki >= yuzde ) return satacagiFiyat
+      
+    // Yukarıdaki değilse kârını koy arka sıralarda dursun
+    return this.sonBuyPrice + (this.sonBuyPrice / 100 * yuzde)
   }
 
   SellBozsunMu() { // Yüzde farkı için
-    var alimSatimYuzdeFarki = ((this.activeSell[0].price - this.sonBuyPrice) / this.sonBuyPrice * 100)
     var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 2  // 3 te 2 si fiyatına pazara koyacak.
-    if (alimSatimYuzdeFarki != yuzde ) { // Eğer güncel sell price ile son buy price arasındaki fark yüzdemizden fazla ise bozsun, bizim istediğimiz yüzde ile tekrar kursunç. Yüzde azalırsa sell de üste çıkarız.
+    var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
+    var alimSatimYuzdeFarki = ((satacagiFiyat - this.sonBuyPrice) / this.sonBuyPrice * 100)
+    if (alimSatimYuzdeFarki > yuzde ) { // Eğer yüzde farkı büyükse pazarı bozsun. çünkü hem yüzde uygun örneğin 27 hemde 1. sırada değil niye arkadarda dursunki ?
       return true
     }else{
       return false
