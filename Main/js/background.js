@@ -823,7 +823,7 @@ async function LoadConsoleTables(){
     var tolamEderi = ederleri + dogeBalance
     var totalEstBalance = _yobitBot["balances"].map(e=> e.EstBtc).reduce((s,c)=> s+c); 
     totalEstBalance = Number(totalEstBalance.toFixed(8))
-    var tradeHistoryYobit = _yobitBot["trade-history"]
+    var tradeHistoryYobit = _yobitBot["trade-history"].reverse()
     var hatalar = Object.keys(_yobitBot["hatalar"]).map(e=> _yobitBot["hatalar"][e]);
     var cssAyar = "font-weight:bold; font-size:15px"
     // TODO : Bazen değerler farklı geliyor 
