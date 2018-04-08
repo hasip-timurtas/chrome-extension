@@ -1,22 +1,23 @@
 const tradeHistoryParams = { "sEcho": "1", "iColumns": "8", "sColumns": ",,,,,,,", "iDisplayStart": "0", "iDisplayLength": "25000", "mDataProp_0": "0", "sSearch_0": "", "bRegex_0": "false", "bSearchable_0": "true", "bSortable_0": "true", "mDataProp_1": "1", "sSearch_1": "", "bRegex_1": "false", "bSearchable_1": "true", "bSortable_1": "true", "mDataProp_2": "2", "sSearch_2": "", "bRegex_2": "false", "bSearchable_2": "true", "bSortable_2": "true", "mDataProp_3": "3", "sSearch_3": "", "bRegex_3": "false", "bSearchable_3": "true", "bSortable_3": "true", "mDataProp_4": "4", "sSearch_4": "", "bRegex_4": "false", "bSearchable_4": "true", "bSortable_4": "true", "mDataProp_5": "5", "sSearch_5": "", "bRegex_5": "false", "bSearchable_5": "true", "bSortable_5": "true", "mDataProp_6": "6", "sSearch_6": "", "bRegex_6": "false", "bSearchable_6": "true", "bSortable_6": "true", "mDataProp_7": "7", "sSearch_7": "", "bRegex_7": "false", "bSearchable_7": "true", "bSortable_7": "true", "sSearch": "", "bRegex": "false", "iSortCol_0": "0", "sSortDir_0": "desc", "iSortingCols": "1", "__RequestVerificationToken": token }
-
+var _result = []
 function GetTradeHistory() {
     const url = "https://www.cryptopia.co.nz/UserExchange/GetTradeHistory"
 
     $.post(url, tradeHistoryParams).done(data => {
-        var result = JSON.parse(data);
-        result = result["aaData"];
-        ProcessTradeHistory(result)
+        _result = JSON.parse(data);
+        _result = _result["aaData"];
+        CryFbSaveBasla()
+        ProcessTradeHistory()
     });
 }
 
 var _markets;
 let _html
 var duzenliMarketler
-function ProcessTradeHistory(result) {
-    console.log(result);
+function ProcessTradeHistory() {
+    console.log(_result);
     var markets = new Set();
-    result.forEach((o) => markets.add(o[1]))
+    _result.forEach((o) => markets.add(o[1]))
     _markets = markets
     duzenliMarketler = []
     markets.forEach(m => {
@@ -24,7 +25,7 @@ function ProcessTradeHistory(result) {
             return false
         }
 
-        var tempMarketler = result.filter(r => r[1] == m)
+        var tempMarketler = _result.filter(r => r[1] == m)
         var yeniMarkets = [], yeniMarket, ayrac, miktar, amount, buy = 0, sell = 0, kar, marketId = 0, toplamBuy = 0, toplamSell = 0, toplamKar = 0
         var buyAmount = 0, sellAmount = 0, amount, toplamBuyAmount = 0, toplamSellAmount = 0
         tempMarketler.sort((a, b) => Number(a[0]) - Number(b[0]))
@@ -226,3 +227,60 @@ const MarketRapoGoster = (marketName) => {
 }
 
 GetTradeHistory()
+
+function CryFbSaveBasla(){
+    var userName = $('.profile-usertitle-name').text().trim()
+    var users = [{
+        name: 'hasip4441',
+        id: 1
+    },
+    {
+        name: 'nervvagus_61',
+        id: 2
+    },
+    {
+        name: 'ortaklar1453',
+        id: 3
+    }]
+    var user = users.find(e=> e.name == userName)
+
+    if(user){
+        LoadTradeHistory(user.id)
+    }
+}
+
+async function LoadTradeHistory(userId){
+    await $.getScript('https://www.gstatic.com/firebasejs/4.12.0/firebase.js')
+    var config = {
+        apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
+        authDomain: "firem-b3432.firebaseapp.com",
+        databaseURL: "https://firem-b3432.firebaseio.com",
+        projectId: "firem-b3432",
+        storageBucket: "firem-b3432.appspot.com",
+        messagingSenderId: "866789153670"
+    };
+    firebase.initializeApp(config);
+    firebase.auth().signInWithEmailAndPassword('hasip@gmail.com', '6359718');
+    _db = firebase.database()
+    
+    Array.prototype.groupBy = function(prop) {
+        return this.reduce(function(groups, item) {
+            const val = item[prop]
+            groups[val] = groups[val] || []
+            groups[val].push(item)
+            return groups
+        }, {})
+    }
+
+    var historim = _result.map(e => e = {
+        TradeId: e[0],
+        Date: e[7],
+        Type: e[2],
+        Rate: Number(e[3]),
+        Amount: Number(e[4]),
+        Total: Number(e[5]),
+        Market: e[1].replace(/\//g, '-').replace(/\$/g, '-')
+    })
+    _db.ref('cry-bot/trade-history-' + userId).set(historim.groupBy('Market'))
+    console.log('Trade History Kaydedildi');
+}

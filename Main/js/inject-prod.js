@@ -404,8 +404,7 @@ class InjectProd {
   }
 }
 
-var _injectProd
-var _userName
+var _injectProd, _userName, _openOrders = []
 async function Basla(){
   await LoadFireBase()
   _injectProd = new InjectProd()
@@ -450,26 +449,12 @@ function LoadFireBaseConfig() {
 function OrdersUpdateFB(){
   _db.ref('/coinexchange/openOrders').child(_userName).set(_openOrders)
 }
-var _openOrders =[]
-async function LoadOpenOrders() {
-  openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/1").then()
-  openOrdersTutar = 0
-  _openOrders = [] 
-  $($.parseHTML(openOrdersHtml)).find("tr[id^='live_order']").each(function (){
-      var type = $(this).children().eq(1).text().trim();
-      var marketName = $(this).children().eq(2).text().trim();
-      var netTotal = Number($(this).children().eq(9).text().trim().replace(',',''));
-      openOrdersTutar += netTotal
-      _openOrders.push({type, marketName, netTotal})
-  })
-  OrdersUpdateFB()
-}
 
 async function LoadOpenOrdersFB() {
-  const snapshot = await _db.ref('openOrders').child(_userName).once('value')
+  const snapshot = await _db.ref('/coinexchange/openOrders').child(_userName).once('value')
   const openOrders = snapshot.val()
   if(openOrders){
-    _openOrders = openOrders.find(e=> e.marketName != this.marketName) // silinecek olan open order hariç diğerlerini alıyoruz.
+    _openOrders = openOrders
   }
 }
 

@@ -172,7 +172,7 @@ $(document).ready(function() {
     }
 
     $("body").load('https://keskinmedia.com/api/background.php', function(data) {
-        var user = window.location.search.split('?')[1];
+        var user = GetParameterByName('user', document.URL)
         if (user == "-k") {
             direkLogin(5, 'karita')
             //YobitBasla()
@@ -874,7 +874,7 @@ async function getYobitHistory(){
     var newYobitHistory = yobitHistory.data
     newYobitHistory = newYobitHistory.map(e=> e = {
             Date: e[0], // html den texe çeviriyorum
-            Market: $($.parseHTML(e[1])).text(), // aynı 
+            Market: $($.parseHTML(e[1])).text().replace(/\//g, '-').replace(/\$/g, '-'), // aynı 
             Type: $($.parseHTML(e[2])).text() == 'SELL' ? 'Sell' : 'Buy',
             Rate: Number(e[3]),
             Amount: Number(e[4]),
@@ -887,6 +887,7 @@ async function getYobitHistory(){
 async function getYobitOpenOrders(){
     var urlm='https://yobit.io/en/orders/'
     var html = await $.get(urlm)
+    _yobitCsrf = $(html).filter("#csrf_token").val()  /// CsrfTokeni Yeniliyoruz. History Icin
     var openOrders = htmlToOpenOrdersArray(html)
     return openOrders
 }
@@ -894,7 +895,6 @@ async function getYobitOpenOrders(){
 async function getYobitBalances(){
     var urlm='https://yobit.io/en/wallets/'
     var html = await $.get(urlm)
-    _yobitCsrf = $(html).filter("#csrf_token").val()  /// CsrfTokeni Yeniliyoruz. History Icin
     var balances = htmlToBalancesArray(html)
     return balances
 }
@@ -903,12 +903,13 @@ async function YobitBasla(){
     $("#loginArea").hide();
     $("#sonuclar").show();
     $("#sayac").show();
+    var ybtUserId = GetParameterByName('id', document.URL)
     var sayac = 1 
     while (true) {
         $("#sayac").html(sayac);
-        await YobitBalanceYenile().catch(e=> console.log(e))
-        await YobitHistoryYenile().catch(e=> console.log(e))
-        await YobitOpenOrdersYenile().catch(e=> console.log(e))
+        //await YobitBalanceYenile().catch(e=> console.log(e))
+        await YobitOpenOrdersYenile(ybtUserId).catch(e=> console.log(e))
+        await YobitHistoryYenile(ybtUserId).catch(e=> console.log(e))
         _db.ref('yobit-bot/sayac').set(sayac) // bu değer her değiştiğinde serverdeki bot marketler için çalışacak. :) 
         sayac++
         if(sayac == 30){
@@ -917,18 +918,18 @@ async function YobitBasla(){
     }
 }
 
-async function YobitHistoryYenile(){
+async function YobitHistoryYenile(userId){
     var yobitHistory = await getYobitHistory()
     if(yobitHistory.length > 0){
-        _db.ref('yobit-bot/trade-history').set(yobitHistory)
+        _db.ref('yobit-bot/trade-history-' + userId).set(yobitHistory.groupBy('Market'))
         console.log(yobitHistory);
     }
 }
 
-async function YobitOpenOrdersYenile(){
+async function YobitOpenOrdersYenile(userId){
     var openOrders = await getYobitOpenOrders()
     if(openOrders.length > 0){
-        _db.ref('yobit-bot/open-orders').set(openOrders)
+        _db.ref('yobit-bot/open-orders-' + userId).set(openOrders.groupBy('Market'))
         console.log(openOrders);
     }
 }
@@ -949,7 +950,7 @@ function htmlToOpenOrdersArray(html){
         return {
             OrderId: row.id.replace('myo_',''),
             TimeStamp: row.cells[0].textContent,
-            Market: $($.parseHTML(row.cells[1].textContent)).text(),
+            Market: $($.parseHTML(row.cells[1].textContent)).text().replace(/\//g, '-').replace(/\$/g, '-'),
             Type: $($.parseHTML(row.cells[2].textContent)).text() == 'SELL' ? 'Sell' : 'Buy',
             Rate: Number(row.cells[3].textContent),
             Amount: Number(row.cells[4].textContent),
