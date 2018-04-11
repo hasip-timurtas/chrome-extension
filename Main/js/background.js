@@ -590,11 +590,17 @@ async function TabKontrol(dbMarkets) {
 }
 
 function LazimOlanSayfalariAc(){
+    
     var sayfalar = [
+        {
+            url:'https://freebitco.in/?op=home',
+            search: 'https://freebitco.in/*' 
+        },        
     {
         url:'https://www.coinexchange.io/orders/page/1',
         search: 'https://www.coinexchange.io/orders/*' 
     }]
+
     sayfalar.forEach(sayfa => {
         SayfaAcKapa(sayfa)
     });
