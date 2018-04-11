@@ -106,6 +106,7 @@ class InjectProd {
     this.BirSatoshiFarkKontrol(data)
   }
 
+
   OrantiliBuyAlKontrolu() {
     const sellAmount = this.secilenMarket.BidPrice *  Number($('#primary-balance-clickable').html())
     var orderSellCount = user_sell_order_prices.length
@@ -138,10 +139,23 @@ class InjectProd {
       $('#buy-form #inputTotal').val(tutar)
       return true
     }
+  }
 
+  TepedenAlmamaKontrolu(){
+    const uygunPrice = (Number(this.secilenMarket.LowPrice) + Number(this.secilenMarket.HighPrice)) * 0.5
+    if(this.secilenMarket.BidPrice < uygunPrice){
+      this.marketiKapat = false  // tepeden almama koşulu uygun.
+    }else{
+      this.marketiKapat = true
+    }
   }
 
   async buy() {
+    this.TepedenAlmamaKontrolu()
+    if(this.marketiKapat){
+      return false
+    }
+
     console.log('buy')
     var yuzde = this.GetParameterByName('yuzde')
     var type = this.GetParameterByName('type')
@@ -185,6 +199,8 @@ class InjectProd {
     LoadOpenOrders()
     return true
   }
+
+
 
   async sell() {
     console.log('sell')
