@@ -254,7 +254,7 @@ class InjectProd {
     //var zararinaSat = this.GetParameterByName('zararinaSat')
     
     var alimSatimYuzdeFarki = ((satacagiFiyat - this.sonBuyPrice) / this.sonBuyPrice * 100)
-    if (alimSatimYuzdeFarki >= yuzde ) return satacagiFiyat
+    if (alimSatimYuzdeFarki >= this.bizimTutarin3te1i ) return satacagiFiyat
       
     // Yukarıdaki değilse kârını koy arka sıralarda dursun
     return this.sonBuyPrice + (this.sonBuyPrice / 100 * this.bizimTutarin3te1i)
