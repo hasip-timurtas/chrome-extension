@@ -377,7 +377,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     })
 
     _kontroleUyanlar = _userDbMarketler.filter(e => {
-        e.yuzde = 20
+        e.yuzde = 15
         e.amount = _Balances.find(b=> b.symbol == e.name.split('/')[0]) || 0
         e.openOrders = _openOrders.filter(o=> o.marketName == e.name);
         if (e.guncelMarket.Volume >= 1000000) {
@@ -813,7 +813,7 @@ async function LoadConsoleTables(){
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    const _yobitBotRef = _db.ref('yobit-bot')
+    const _yobitBotRef = _db.ref(`yobit-bot/${_userId}`)
     const snapshot = await _yobitBotRef.once('value')
     _yobitBot = snapshot.val()
     var dogeBalance = _yobitBot["balances"].find(e=> e.Symbol=='DOGE').Available
@@ -907,10 +907,10 @@ async function YobitBasla(){
     var sayac = 1 
     while (true) {
         $("#sayac").html(sayac);
-        //await YobitBalanceYenile().catch(e=> console.log(e))
+        await YobitBalanceYenile(ybtUserId).catch(e=> console.log(e))
         await YobitOpenOrdersYenile(ybtUserId).catch(e=> console.log(e))
         await YobitHistoryYenile(ybtUserId).catch(e=> console.log(e))
-        _db.ref('yobit-bot/sayac').set(sayac) // bu değer her değiştiğinde serverdeki bot marketler için çalışacak. :) 
+        _db.ref(`yobit-bot/${_userId}/sayac`).set(sayac)// bu değer her değiştiğinde serverdeki bot marketler için çalışacak. :) 
         sayac++
         if(sayac == 30){
             window.location.reload()
@@ -921,7 +921,7 @@ async function YobitBasla(){
 async function YobitHistoryYenile(userId){
     var yobitHistory = await getYobitHistory()
     if(yobitHistory.length > 0){
-        _db.ref('yobit-bot/trade-history-' + userId).set(yobitHistory.groupBy('Market'))
+        _db.ref(`yobit-bot/${_userId}/trade-history`).set(yobitHistory.groupBy('Market'))
         console.log(yobitHistory);
     }
 }
@@ -929,15 +929,15 @@ async function YobitHistoryYenile(userId){
 async function YobitOpenOrdersYenile(userId){
     var openOrders = await getYobitOpenOrders()
     if(openOrders.length > 0){
-        _db.ref('yobit-bot/open-orders-' + userId).set(openOrders.groupBy('Market'))
+        _db.ref(`yobit-bot/${_userId}/open-orders`).set(openOrders.groupBy('Market'))
         console.log(openOrders);
     }
 }
 
-async function YobitBalanceYenile(){
+async function YobitBalanceYenile(userId){
     var balances = await getYobitBalances()
     if(balances.length > 0){
-        _db.ref('yobit-bot/balances').set(balances)
+        _db.ref(`yobit-bot/${_userId}/balances`).set(balances)
         console.log(balances);
     }
 }

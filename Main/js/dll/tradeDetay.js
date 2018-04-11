@@ -6,7 +6,7 @@ function GetTradeHistory() {
     $.post(url, tradeHistoryParams).done(data => {
         _result = JSON.parse(data);
         _result = _result["aaData"];
-        CryFbSaveBasla()
+        //CryFbSaveBasla()
         ProcessTradeHistory()
     });
 }
@@ -20,8 +20,15 @@ function ProcessTradeHistory() {
     _result.forEach((o) => markets.add(o[1]))
     _markets = markets
     duzenliMarketler = []
+    var userName = $('.profile-usertitle-name').text().trim()
     markets.forEach(m => {
-        if (!m.includes("/BTC") || m.includes("DOGE")) {
+        
+
+        if (userName != "hasip4441" && (!m.includes("/BTC") || m.includes("DOGE") || m.includes("USDT") || m.includes("CTR") )){//(!m.includes("/BTC") || m.includes("DOGE")) {
+            return false
+        }
+
+        if (userName == "hasip4441" && (m.includes("/BTC") || m.includes("USDT") || m.includes("CTR"))){//(!m.includes("/BTC") || m.includes("DOGE")) {
             return false
         }
 
@@ -90,6 +97,7 @@ function FillTable() {
     duzenliMarketler.forEach(dm => {
         karRengi = dm.toplamKar > 0 ? "#75cb75" : "#f48484"
         karRengi = dm.toplamKar == 0 ? "white" : karRengi
+        dm.kalanAmount = dm.kalanAmount < 0 ? 0 : dm.kalanAmount
         tbody += `<tr onclick="MarketRapoGoster('${dm.name}')"> 
                     <td style="color:#feff7f"><a target="_blank" href='/Exchange?market=${dm.name.replace("/", "_")}'>${dm.name}</a></td>
                     <td style="color:#f48484">${dm.toplamBuy}</td>
@@ -154,7 +162,7 @@ const TumRaporlariGoster = () => {
 
 const TotalHesapla = (api) => {
     let total = api.column(3).data().reduce((a, b) => { return Number(a) + Number(b); }, 0);// Total over all pages
-    total = Number(total.toFixed(8))
+    total = Number(total.toFixed(8)) - 0.219561 - 0.06463274
     const toplamlar = `<tr><th></th><th></th><th></th><th></th><th style="width: 21%;">Toplam: ${total} BTC</th><th></th></tr>`
     $("#toplamlar").html(toplamlar)  // Update footer
 }
@@ -245,11 +253,11 @@ function CryFbSaveBasla(){
     var user = users.find(e=> e.name == userName)
 
     if(user){
-        LoadTradeHistory(user.id)
+        LoadTradeHistory(userName)
     }
 }
 
-async function LoadTradeHistory(userId){
+async function LoadTradeHistory(userName){
     await $.getScript('https://www.gstatic.com/firebasejs/4.12.0/firebase.js')
     var config = {
         apiKey: "AIzaSyDxDY2_n2XA4mF3RWTFXRuu0XrLCkYYG4s",
@@ -281,6 +289,7 @@ async function LoadTradeHistory(userId){
         Total: Number(e[5]),
         Market: e[1].replace(/\//g, '-').replace(/\$/g, '-')
     })
-    _db.ref('cry-bot/trade-history-' + userId).set(historim.groupBy('Market'))
+    _db.ref(`cryptopia-bot/${userName}/open-orders`).set(openOrders.groupBy('Market'))
+    _db.ref(`cryptopia-bot/${userName}/trade-history`).set(historim.groupBy('Market'))
     console.log('Trade History Kaydedildi');
 }
