@@ -9,6 +9,7 @@ class InjectProd {
     var marketSum = await $.get("/api/v1/getmarketsummary?market_id=" + $("#buy-form #market_id").val()).then()
     this.secilenMarket = marketSum.result // JSON.parse($('body').attr('datam'))
     this.guncelAlimSatimYuzdeFarki = Math.round((this.secilenMarket.AskPrice - this.secilenMarket.BidPrice) / this.secilenMarket.BidPrice * 100)
+    this.bizimTutarin3te1i = Number(this.GetParameterByName('yuzde')) / 3 * 1
     this.DbGuncelle()
     this.AlimSatimKontrol()
   }
@@ -94,17 +95,39 @@ class InjectProd {
     var data = await this.GetKacinci()
 
     if (data.buySirasi > 1) {
-     return this.BuyIptalveRefresh()
+      return this.OndekiTutarKontrolu('BuyOrders', data.buySirasi)
     }
 
     if (data.sellSirasi > 1) {
       if (this.SellBozsunMu()) { // alım ile satım arasında %10 fark yoksa zaten arkalarda kalmalı. O yüzden iplemi iptal edip öne almaya gerek yok.
-        return this.SellIptalveRefresh()
+        return this.OndekiTutarKontrolu('SellOrders', data.sellSirasi)
+        //return this.SellIptalveRefresh()
       }
     }
 
     this.BirSatoshiFarkKontrol(data)
   }
+
+  OndekiTutarKontrolu(type, sira){
+    var ilkinTutari = this.marketOrderBook[type][0].Quantity * this.marketOrderBook[type][0].Price // Burası 1. sıradaki buy un tutarı yani kaç dogelik pazar kurmuş eğerki 1000 dogenin altındaysa önüne geçme
+    var ilkVeIkincininTutari = ilkinTutari + this.marketOrderBook[type][1].Quantity * this.marketOrderBook[type][1].Price // Burası 1. sıradaki buy un tutarı yani kaç dogelik pazar kurmuş eğerki 1000 dogenin altındaysa önüne geçme
+    var ilkIkiVeUcuncununTutari = ilkVeIkincininTutari + this.marketOrderBook[type][2].Quantity * this.marketOrderBook[type][2].Price
+
+    if (sira == 2 && ilkinTutari < this.bizimTutarin3te1i) {
+        // 2. sıradaysa ve ilk orderin tutarı bizimkinin 3te1inden düşükse kalsın. bu ilerde %5 te olabilir.
+    } else if (sira == 3 && ilkVeIkincininTutari < this.bizimTutarin3te1i) {
+        // 3. sıradaysa ve ilkin ve ikincinin tutarı bizimkinin 3te1inden düşükse kalsın. bu ilerde %5 te olabilir.
+    } else if (sira == 4 && ilkIkiVeUcuncununTutari < this.bizimTutarin3te1i) {
+        // 4. sıradaysa ve ilkin ve ikincinin ve ucuncunun tutarı bizimkinin 3te1inden düşükse kalsın. bu ilerde %5 te olabilir.
+    } else {
+      if(type == "SellOrders"){
+        this.SellIptalveRefresh()
+      }else if(type == "BuyOrders"){
+        this.BuyIptalveRefresh()
+      }
+    }
+}
+
 
 
   OrantiliBuyAlKontrolu() {
@@ -226,7 +249,6 @@ class InjectProd {
 
   GetSellPrice() {
     console.log('BuyFarkKontrolSellIcin')
-    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 1  // 3 te 2 si fiyatına pazara koyacak.
     // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
     //var zararinaSat = this.GetParameterByName('zararinaSat')
@@ -235,14 +257,13 @@ class InjectProd {
     if (alimSatimYuzdeFarki >= yuzde ) return satacagiFiyat
       
     // Yukarıdaki değilse kârını koy arka sıralarda dursun
-    return this.sonBuyPrice + (this.sonBuyPrice / 100 * yuzde)
+    return this.sonBuyPrice + (this.sonBuyPrice / 100 * this.bizimTutarin3te1i)
   }
 
   SellBozsunMu() { // Yüzde farkı için
-    var yuzde = Number(this.GetParameterByName('yuzde')) / 3 * 1  // 3 te 2 si fiyatına pazara koyacak.
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
     var alimSatimYuzdeFarki = ((satacagiFiyat - this.sonBuyPrice) / this.sonBuyPrice * 100)
-    if (alimSatimYuzdeFarki > yuzde ) { // Eğer yüzde farkı büyükse pazarı bozsun. çünkü hem yüzde uygun örneğin 27 hemde 1. sırada değil niye arkadarda dursunki ?
+    if (alimSatimYuzdeFarki > this.bizimTutarin3te1i ) { // Eğer yüzde farkı büyükse pazarı bozsun. çünkü hem yüzde uygun örneğin 27 hemde 1. sırada değil niye arkadarda dursunki ?
       return true
     }else{
       return false
