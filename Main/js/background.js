@@ -31,6 +31,15 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
+    if(_userId && tab.url.includes('https://freebitco.in') && changeInfo.status === 'complete' && tab.status == 'complete'){
+        if (tab.url.includes("/?op=home")) {
+            chrome.tabs.executeScript(tabId, {
+                code: `setTimeout(()=>{ $("#free_play_form_button").click() },10000)`,
+                runAt: "document_end"
+            });
+        }
+    }
+
     if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete" && tab.status == 'complete') {
         if (tab.url.includes("/Exchange?market=")) {
             chrome.tabs.executeScript(tabId, {
