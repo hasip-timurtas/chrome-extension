@@ -219,7 +219,7 @@ class InjectProd {
     $('#buy-form #inputPrice').val(yeniFiyat)
     this.InputPriceKeyUpBuy()
     confirmOrderSubmitCore()
-    LoadOpenOrders()
+    LoadOpenOrdersFB()
     return true
   }
 
@@ -243,7 +243,7 @@ class InjectProd {
     $('#sell-form #inputAmount').val(tutar)
     this.InputPriceKeyUpSell()
     confirmOrderSubmitCore()
-    LoadOpenOrders()
+    LoadOpenOrdersFB()
     return true
   }
 
@@ -493,10 +493,6 @@ async function LoadOpenOrdersFB() {
   if(openOrders){
     _openOrders = openOrders
   }
-}
-
-function OrdersUpdateFB(){
-  _db.ref('/coinexchange/openOrders').child(_userName).set(_openOrders)
 }
 
 Basla()
