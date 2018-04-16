@@ -65,16 +65,10 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
 
     if (tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {  
         if (tab.url.includes("/balances")) {
-            var openOrdersTutar = await LoadOpenOrdersForCoinexchangeBalance()
-            
-          chrome.tabs.executeScript(tabId, {
-            code: `var toplamTutar = ${openOrdersTutar};
-    var balancem = Number($("td:contains('Dogecoin')")[0].parentElement.children[2].innerText);
-    var aciklama = $("h3:contains('Account Balances:')").html();
-    var toplam = toplamTutar + balancem
-            $("h3:contains('Account Balances:')").html(aciklama + "<br> balance: " + balancem + "<br>order tutar: " + toplamTutar+"<br> Toplam: "+toplam)`,
-            runAt: "document_end"
-          });
+            chrome.tabs.executeScript(tabId, {
+                code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/coinexchange-balance-toplam.js?v='+ Math.random(); document.head.appendChild(i);",
+                runAt: "document_end"
+            });
         }
       }
 
@@ -592,11 +586,12 @@ async function TabKontrol(dbMarkets) {
 function LazimOlanSayfalariAc(){
     
     var sayfalar = [
-        
+        /*
         {
             url:'https://freedoge.co.in/?op=home',
             search: 'https://freedoge.co.in/*' 
         },
+        */
         {
             url:'https://freebitco.in/?op=home',
             search: 'https://freebitco.in/*' 
