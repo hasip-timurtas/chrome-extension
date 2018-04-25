@@ -253,8 +253,8 @@ class InjectProd {
     console.log('BuyFarkKontrolSellIcin')
     // Zararına Sat : Eğerbu aktifse kaç paraya aldığına bakmaz direk en üste koyar.
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
-    //var zararinaSat = this.GetParameterByName('zararinaSat')
-    
+    var zararinaSat = this.GetParameterByName('zararinaSat')
+    if(zararinaSat=='A') return satacagiFiyat
     var alimSatimYuzdeFarki = ((satacagiFiyat - this.sonBuyPrice) / this.sonBuyPrice * 100)
     if (alimSatimYuzdeFarki >= this.bizimTutarin3te1i ) return satacagiFiyat
       

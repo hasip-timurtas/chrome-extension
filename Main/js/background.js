@@ -372,7 +372,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
         }
 
         e.name = e.MarketAssetCode + "/" + e.BaseCurrencyCode;
-        e.tutar = 10000, e.type = 'SA', e.userId = 5, e.status = 'A', e.marketId = e.MarketID, e.zararinaSat = 'D'
+        e.tutar = 10000, e.type = 'S', e.userId = 5, e.status = 'A', e.marketId = e.MarketID, e.zararinaSat = 'A'
 
         e.guncelMarket = guncelMarket
         e.guncelYuzde = Math.round(((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100))
