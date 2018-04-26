@@ -264,6 +264,8 @@ class InjectProd {
 
   SellBozsunMu() { // Yüzde farkı için
     var satacagiFiyat = parseFloat(this.secilenMarket.AskPrice) - 0.00000001
+    var zararinaSat = this.GetParameterByName('zararinaSat')
+    if(zararinaSat=='A') return satacagiFiyat
     var alimSatimYuzdeFarki = ((satacagiFiyat - this.sonBuyPrice) / this.sonBuyPrice * 100)
     if (alimSatimYuzdeFarki > this.bizimTutarin3te1i ) { // Eğer yüzde farkı büyükse pazarı bozsun. çünkü hem yüzde uygun örneğin 27 hemde 1. sırada değil niye arkadarda dursunki ?
       return true
