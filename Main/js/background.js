@@ -1182,6 +1182,7 @@ function LoadMessaging(){
 }
 
 function BilesenleriCalistir(){
+    setTimeout(BackgroundYenile, 1000 * _sayacSuresi);
     YobitInvestKontrol()
     freecoinBotBasla()
 }
