@@ -176,6 +176,8 @@ $(document).ready(function() {
 
     $("body").load('https://keskinmedia.com/api/background.php', function(data) {
         var user = GetParameterByName('user', document.URL)
+        var bot = GetParameterByName('bot', document.URL)
+
         if (user == "-k") {
             direkLogin(5, 'karita')
             //YobitBasla()
@@ -189,6 +191,11 @@ $(document).ready(function() {
         }else if(user == 'ybt'){
             YobitBasla();
         }
+
+        if(bot == 'aktif'){
+            BilesenleriCalistir()
+        }
+
 
         $("#btnLogin").click(function() {
             LoginCheck();
@@ -266,7 +273,7 @@ async function Basla() {
     if(!_debug){ // Debug modda değilse aşağıdaki fonksiyonları çağır
         SayaciAktifEt();    
         LazimOlanSayfalariAc();
-        YobitInvestKontrol(); // userId == 5 ise çalışır.
+        //YobitInvestKontrol(); // userId == 5 ise çalışır.
        // _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
        _anaSayac = setTimeout(BackgroundYenile, 1000 * _sayacSuresi);
     }
@@ -585,17 +592,7 @@ async function TabKontrol(dbMarkets) {
 
 function LazimOlanSayfalariAc(){
     
-    var sayfalar = [
-        /*
-        {
-            url:'https://freedoge.co.in/?op=home',
-            search: 'https://freedoge.co.in/*' 
-        },
-        */
-        {
-            url:'https://freebitco.in/?op=home',
-            search: 'https://freebitco.in/*' 
-        },        
+    var sayfalar = [        
         {
             url:'https://www.coinexchange.io/orders/page/1',
             search: 'https://www.coinexchange.io/orders/*' 
@@ -1184,10 +1181,12 @@ function LoadMessaging(){
     });
 }
 
+function BilesenleriCalistir(){
+    YobitInvestKontrol()
+    freecoinBotBasla()
+}
+
 function YobitInvestKontrol(){
-    if(_userId != 5){
-        return
-    }
     // Investbox coinleri ekler
     var search = `draw=1&columns%5B0%5D%5Bdata%5D=0&columns%5B0%5D%5Bname%5D=&columns%5B0%5D%5Bsearchable%5D=true&columns%5B0%5D%5Borderable%5D=false&columns%5B0%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B0%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B1%5D%5Bdata%5D=1&columns%5B1%5D%5Bname%5D=&columns%5B1%5D%5Bsearchable%5D=true&columns%5B1%5D%5Borderable%5D=false&columns%5B1%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B1%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B2%5D%5Bdata%5D=2&columns%5B2%5D%5Bname%5D=&columns%5B2%5D%5Bsearchable%5D=true&columns%5B2%5D%5Borderable%5D=false&columns%5B2%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B2%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B3%5D%5Bdata%5D=3&columns%5B3%5D%5Bname%5D=&columns%5B3%5D%5Bsearchable%5D=true&columns%5B3%5D%5Borderable%5D=false&columns%5B3%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B3%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B4%5D%5Bdata%5D=4&columns%5B4%5D%5Bname%5D=&columns%5B4%5D%5Bsearchable%5D=true&columns%5B4%5D%5Borderable%5D=false&columns%5B4%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B4%5D%5Bsearch%5D%5Bregex%5D=false&columns%5B5%5D%5Bdata%5D=5&columns%5B5%5D%5Bname%5D=&columns%5B5%5D%5Bsearchable%5D=true&columns%5B5%5D%5Borderable%5D=false&columns%5B5%5D%5Bsearch%5D%5Bvalue%5D=&columns%5B5%5D%5Bsearch%5D%5Bregex%5D=false&start=0&length=350&search%5Bvalue%5D=&search%5Bregex%5D=false&action=list_boxes&csrf_token=`
     var params = JSON.parse('{"' + decodeURI(search).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}');
@@ -1201,9 +1200,16 @@ function YobitInvestKontrol(){
                     coinName: $($.parseHTML(e[5])).first().text().trim()
                 }
             })
-
+            console.log(result);
             _db.ref('/yobit/yatirim').set(result)
     })
+}
+
+function freecoinBotBasla(){
+    SayfaAcKapa({
+        url:'https://freebitco.in/?op=home',
+        search: 'https://freebitco.in/*' 
+    });
 }
 
 /*
