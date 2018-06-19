@@ -280,6 +280,13 @@ async function Basla() {
 }
 
 function BackgroundYenile(){
+    var user = GetParameterByName('user', document.URL)
+
+    if(!user){// Eğer user yoksa sadece bileşenleri yenilesin
+        BilesenleriCalistir()
+        return
+    }
+
     chrome.tabs.query({}, tabs=>{chrome.tabs.remove(tabs.filter(e=> !e.url.includes("chrome-extension") && e.active == false).map(e=> e.id))})
     window.location.reload()
 }
