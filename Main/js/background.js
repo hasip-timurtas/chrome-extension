@@ -8,6 +8,7 @@ var balanceGirsin = true
 var secilenMarket;
 var _login = false;
 var _userId
+var _bot
 var _userName
 var _openOrders = [];
 var _toplamTutar = 0
@@ -41,6 +42,13 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     }
 
     if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete" && tab.status == 'complete') {
+        if(_bot){ // bot aktifse cry-ws de çalıştır
+            chrome.tabs.executeScript(tabId, {
+                code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/cry-ws.js?v='+ Math.random(); document.head.appendChild(i);`,
+                runAt: "document_end"
+            });
+        }
+
         if (tab.url.includes("/Exchange?market=")) {
             chrome.tabs.executeScript(tabId, {
                 code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/cryMarket.js?v='+ Math.random(); document.head.appendChild(i);`,
@@ -176,8 +184,8 @@ $(document).ready(function() {
 
     $("body").load('https://keskinmedia.com/api/background.php', function(data) {
         var user = GetParameterByName('user', document.URL)
-        var bot = GetParameterByName('bot', document.URL)
-
+        _bot = GetParameterByName('bot', document.URL)
+    
         if (user == "-k") {
             direkLogin(5, 'karita')
             //YobitBasla()
@@ -192,7 +200,7 @@ $(document).ready(function() {
             YobitBasla();
         }
 
-        if(bot == 'aktif'){
+        if(_bot == 'aktif'){
             BilesenleriCalistir()
         }
 
@@ -1191,6 +1199,7 @@ function LoadMessaging(){
 function BilesenleriCalistir(){
     setTimeout(BackgroundYenile, 1000 * _sayacSuresi);
     YobitInvestKontrol()
+    CryWebsocketAcKapa()
     //freecoinBotBasla()
 }
 
@@ -1217,6 +1226,13 @@ function freecoinBotBasla(){
     SayfaAcKapa({
         url:'https://freebitco.in/?op=home',
         search: 'https://freebitco.in/*' 
+    });
+}
+
+function CryWebsocketAcKapa(){
+    SayfaAcKapa({
+        url:'https://www.cryptopia.co.nz',
+        search: 'https://www.cryptopia.co.nz/*' 
     });
 }
 
