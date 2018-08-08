@@ -610,7 +610,8 @@ function LazimOlanSayfalariAc(){
     var sayfalar = [        
         {
             url:'https://www.coinexchange.io/orders/page/1',
-            search: 'https://www.coinexchange.io/orders/*' 
+            search: 'https://www.coinexchange.io/orders/*',
+            active: false
         }]
 
     sayfalar.forEach(sayfa => {
@@ -621,7 +622,7 @@ function LazimOlanSayfalariAc(){
 function SayfaAcKapa(sayfa) {
     const yeniHistoryAc = () => {
         chrome.tabs.create({
-            active: false,
+            active: sayfa.active,
             url: sayfa.url
         });
     }
@@ -1225,14 +1226,16 @@ function YobitInvestKontrol(){
 function freecoinBotBasla(){
     SayfaAcKapa({
         url:'https://freebitco.in/?op=home',
-        search: 'https://freebitco.in/*' 
+        search: 'https://freebitco.in/*',
+        active: false
     });
 }
 
 function CryWebsocketAcKapa(){
     SayfaAcKapa({
         url:'https://www.cryptopia.co.nz',
-        search: 'https://www.cryptopia.co.nz/*' 
+        search: 'https://www.cryptopia.co.nz/*',
+        active: true
     });
 }
 
