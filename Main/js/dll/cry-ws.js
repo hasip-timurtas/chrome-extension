@@ -52,6 +52,8 @@ function WebSocketInit(){
               _db.ref('/Abritage-in-site/cryptopia-ws-error').set(error)
           }
 
+          _ws.onclose =() => window.location.reload()
+
           var mainMarkets = ['BTC', 'LTC', 'DOGE']
           _ws.onmessage = (message) => {
               var data = JSON.parse(message.data)

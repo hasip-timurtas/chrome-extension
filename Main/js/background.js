@@ -1,5 +1,5 @@
 var _access_token = "8f03c10593f0abadef0b3084ba560826";
-var _sayacSuresi = 60;
+var _sayacSuresi = 500;
 var _marketSuresi = 15 // Açtığı her market için bekleme süresi.
 var _guncelSayacSuresi
 var _anaSayac
