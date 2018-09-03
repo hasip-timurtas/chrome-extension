@@ -137,7 +137,7 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
                 runAt: "document_end"
             });
 
-            const timeriBaslat = () => {
+            var timeriBaslat = () => {
                 UygulamayiBaslat()
                 _login = false /// Login sayfasına girebilir.
             }
@@ -159,7 +159,7 @@ async function LogoutBildir() {
         });
     });
 
-    const loginSayfasiniAc = () => {
+    var loginSayfasiniAc = () => {
         chrome.tabs.query({
             url: "https://www.coinexchange.io/*"
         }, function(tabs) {
@@ -179,7 +179,7 @@ async function LogoutBildir() {
 
 $(document).ready(function() {
 
-    const direkLogin = (userId, UserName)=>{
+    var direkLogin = (userId, UserName)=>{
         $("#loginArea").hide();
         $("#sonuclar").show();
         $("#sayac").show();
@@ -515,12 +515,12 @@ async function LoadOpenOrdersForCoinexchangeBalance() {
 }
 
 async function jqueryIleSayfaYuklet(){
- console.log('jqueryIleSayfaYuklet Başladı');
+ console.log('jqueryIleSayfaYukvar Başladı');
  
-  for(let market of _kontroleUyanlar){
+  for(var market of _kontroleUyanlar){
     var url = `https://www.coinexchange.io/market/${market.name}?tutar=${market.tutar}&type=${market.type}&yuzde=${market.yuzde}&userId=${_userId}&marketId=${market.marketId}&zararinaSat=${market.zararinaSat}&appId=${_appId}`
     market.url = url;
-    let newTab = await createTab(url);
+    var newTab = await createTab(url);
     await sleep(_marketSuresi);
     chrome.tabs.remove(newTab.id);
     wsMarketData(market.marketId)
@@ -535,7 +535,7 @@ async function TekliSatfaYukle(market){
 
     var marketTabs = await chromep.tabs.query({url: `https://www.coinexchange.io/market/${market.name}?*`})
     if(marketTabs.length == 0 ){ // Zaten açık sayfa varsa açmasın.
-        let newTab = await createTab(market.url);
+        var newTab = await createTab(market.url);
         await sleep(_marketSuresi);
         chrome.tabs.remove(newTab.id);
     }
@@ -583,7 +583,7 @@ function ButunSayfalariYenile() {
 }
 
 async function SayfalariYenile(tabs) {
-    for (const tab of tabs) {
+    for (var tab of tabs) {
         await sleep(2) // 1 ila 20 saniye arasında bekler 
         chrome.tabs.reload(tab.id);
     }
@@ -627,7 +627,7 @@ function LazimOlanSayfalariAc(){
 }
 
 function SayfaAcKapa(sayfa) {
-    const yeniHistoryAc = () => {
+    var yeniHistoryAc = () => {
         chrome.tabs.create({
             active: sayfa.active,
             url: sayfa.url
@@ -646,7 +646,7 @@ function SayfaAcKapa(sayfa) {
 
 async function TabiDbdekilerdeArat(tabs, dbMarkets) {
 
-    for (const tab of tabs) {
+    for (var tab of tabs) {
         var tabMarket = GetMarketInfoFromUrl(tab.url);
         // tabın dbdekiler içinde ismi ile aranması
         var markets = $.grep(dbMarkets, function(e) {
@@ -669,7 +669,7 @@ async function TabiDbdekilerdeArat(tabs, dbMarkets) {
 
 
 async function DbdekileriTabdaArat(dbMarkets, tabs) {
-    for (const dbMarket of dbMarkets) {
+    for (var dbMarket of dbMarkets) {
         // dbdeki Marketin tablar içinde aranması
         var tabMarkets = $.grep(tabs, function(e) {
             var tabMarket = GetMarketInfoFromUrl(e.url);
@@ -738,7 +738,7 @@ function executeScripts(tabId, injectDetailsArray) {
         callback(); // execute outermost function
 }
 
-const openOrdersDataGuncelle = (prm) => {
+var openOrdersDataGuncelle = (prm) => {
     _openOrders = prm.openOrders
     _toplamTutar = prm.toplamTutar
     if ($("#ordersTotal").length > 0) {
@@ -776,9 +776,9 @@ chrome.runtime.sendMessage(appId, { type: "orders", openOrders, toplamTutar }, r
 */
 
 function GetFunctionBodyCode(fnc) {
-    const fncSt = fnc.toString()
+    var fncSt = fnc.toString()
 
-    const functionBody = fncSt.slice(fncSt.indexOf("{") + 1, fncSt.lastIndexOf("}"));
+    var functionBody = fncSt.slice(fncSt.indexOf("{") + 1, fncSt.lastIndexOf("}"));
 
     return functionBody
 }
@@ -843,13 +843,13 @@ async function LoadFireBase() {
 
 var _yobitBot
 async function LoadConsoleTables(){
-    const numberWithCommas = (x) => {
+    var numberWithCommas = (x) => {
         x = parseInt(x)
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    const _yobitBotRef = _db.ref(`yobit-bot/${_userId}`)
-    const snapshot = await _yobitBotRef.once('value')
+    var _yobitBotRef = _db.ref(`yobit-bot/${_userId}`)
+    var snapshot = await _yobitBotRef.once('value')
     _yobitBot = snapshot.val()
     var dogeBalance = _yobitBot["balances"].find(e=> e.Symbol=='DOGE').Available
     var ordersToplam = _yobitBot["open-orders"].map(e=> e.Total).reduce((s,c)=> s+c)
@@ -1024,8 +1024,8 @@ async function getYobitMarketNames(symbol) {
 
 async function GetYobitMarkets() {
     var symbols = await getYobitMarketNames('doge');
-    let coinler = []
-    let tickerUrls = []
+    var coinler = []
+    var tickerUrls = []
     symbols.forEach((e, idx, array) => {
         if (coinler.length > 50) {
             tickerUrls.push(coinler)
@@ -1037,8 +1037,8 @@ async function GetYobitMarkets() {
         }
     })
     var yobitUrl = 'https://yobit.net/api/3/ticker/'
-    let allMarkets = []
-    for (let tickerUrl of tickerUrls) {
+    var allMarkets = []
+    for (var tickerUrl of tickerUrls) {
         console.log(tickerUrl);
 
         var url = tickerUrl.join('-')
@@ -1047,7 +1047,7 @@ async function GetYobitMarkets() {
         await $.get(yeniYobitUrl).then(markets => {
             Object.keys(markets).forEach(key => {
                 var newMrkt = parseTicker(markets[key])
-                const guncelMarket = CommonFormat('market', newMrkt)
+                var guncelMarket = CommonFormat('market', newMrkt)
                 allMarkets.push(guncelMarket)
             })
         }).catch(e => {
@@ -1127,8 +1127,8 @@ function CommonFormat(type, data) {
 }
 
 function parseTicker (ticker, market = undefined) {
-    let timestamp = ticker['updated'] * 1000;
-    let symbol = undefined;
+    var timestamp = ticker['updated'] * 1000;
+    var symbol = undefined;
     if (market)
         symbol = market['symbol'];
     return {
@@ -1156,7 +1156,7 @@ function parseTicker (ticker, market = undefined) {
 // Groupby örneğin : history.groupBy('Market') --> historyi marketlere göre ayırır.
 Array.prototype.groupBy = function(prop) {
     return this.reduce(function(groups, item) {
-      const val = item[prop]
+      var val = item[prop]
       groups[val] = groups[val] || []
       groups[val].push(item)
       return groups
@@ -1164,7 +1164,7 @@ Array.prototype.groupBy = function(prop) {
 }
 
 function LoadMessaging(){
-    const messaging = firebase.messaging();
+    var messaging = firebase.messaging();
     messaging.usePublicVapidKey("BMp22N-6qaqEo4dFjN_8xuC0zDuHBIAaR2zOCXnp643VC_Myj2LLpWcUWyks84MgeowXplaDvq8MTZlyqBWStNU");
     messaging.requestPermission().then(function() {
         console.log('Notification permission granted.');
@@ -1260,7 +1260,7 @@ function CryWebsocketAcKapa(){
 firebase.initializeApp(config);
 firebase.auth().signInWithEmailAndPassword('hasip@gmail.com','6359718');
 
-const dbRefHasip = firebase.database().ref('/ccx/balances')
+var dbRefHasip = firebase.database().ref('/ccx/balances')
 
 dbRefHasip.on('value', snap=>{ console.log(snap.val())})
 
