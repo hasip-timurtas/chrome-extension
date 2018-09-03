@@ -42,6 +42,13 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     }
 
     if (tab.url.includes("https://www.cryptopia.co.nz/") && changeInfo.status === "complete" && tab.status == 'complete') {
+        
+        //Her sayfa için
+        chrome.tabs.executeScript(tabId, {
+            code: `sendNotification = function(){}`, // Şimdilik cry notificationları deaktif ediyoruz.
+            runAt: "document_end"
+        });
+
         if(_bot){ // bot aktifse cry-ws de çalıştır
             chrome.tabs.executeScript(tabId, {
                 code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/cry-ws.js?v='+ Math.random(); document.head.appendChild(i);`,
@@ -55,14 +62,14 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
                 runAt: "document_end"
             });
         }
-
+/*
         if (tab.url.includes("/TradeHistory")) {
             chrome.tabs.executeScript(tabId, {
                 code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/tradeHistoryDetay.js?v='+ Math.random(); document.head.appendChild(i);",
                 runAt: "document_end"
             });
         }
-
+*/
         if (tab.url.includes("/Balances")) {
             chrome.tabs.executeScript(tabId, {
                 code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/balanceToplam.js?v='+ Math.random(); document.head.appendChild(i);",
