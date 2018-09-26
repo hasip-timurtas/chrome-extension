@@ -183,7 +183,7 @@ function ProcessTradeHistory(data) {
         duzenliMarketler.push({ name: m, toplamBuy, toplamSell, toplamKar, data: yeniMarkets, kalanAmount })
         marketId++
     })
-    console.log(duzenliMarketler);
+    console.log('crydeki gibi trade detay sonuçları', duzenliMarketler);
 
     //FillTable();
 }
