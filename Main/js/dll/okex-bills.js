@@ -23,6 +23,7 @@ async function Basla(){
     var datam = bills.data.billList.groupBy('createTime');
     datam = Object.keys(datam).map(e=> datam[e])
     console.log('datam', datam)
+    var datam = datam.filter(e=> e[1])
     var mappedData = datam.map(e => {
         var data = {}
         var totalTotal = 0
@@ -30,7 +31,6 @@ async function Basla(){
         var totalAmount = 0
         var totalAltBalance = 0
         var totalAnaBalance = 0
-
         if(mainMarkets.includes(e[0].currency)){ // sell
             data.marketName = e[1].currency+ '/' +e[0].currency;
             data.type = 'Sell'

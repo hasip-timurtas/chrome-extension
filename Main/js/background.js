@@ -42,23 +42,22 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
     }
 
     if (tab.url.includes("https://poshmark.com/") && changeInfo.status === "complete" && tab.status == 'complete') {
-        if (tab.url.includes("/category") && tab.url.includes("basla")) {
-            chrome.tabs.executeScript(tabId, {
-                code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/poshmark-share.js?v='+ Math.random(); document.head.appendChild(i);`,
-                runAt: "document_end"
-            });
+        if(tab.url.includes("basla")){
+            if (tab.url.includes("/category") ) {
+                chrome.tabs.executeScript(tabId, {
+                    code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/poshmark-share.js?v='+ Math.random(); document.head.appendChild(i);`,
+                    runAt: "document_end"
+                });
+            }
+    
+            if (tab.url.includes("/news")) {
+                chrome.tabs.executeScript(tabId, {
+                    code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/poshmark-follow.js?v='+ Math.random(); document.head.appendChild(i);`,
+                    runAt: "document_end"
+                });
+            }
         }
     }
-
-    if (tab.url.includes("https://poshmark.com/") && changeInfo.status === "complete" && tab.status == 'complete') {
-        if (tab.url.includes("/news") && tab.url.includes("basla")) {
-            chrome.tabs.executeScript(tabId, {
-                code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/poshmark-follow.js?v='+ Math.random(); document.head.appendChild(i);`,
-                runAt: "document_end"
-            });
-        }
-    }
-
 
     if (tab.url.includes("https://www.okex.com/") && changeInfo.status === "complete" && tab.status == 'complete') {
         if (tab.url.includes("/spot/bills")) {

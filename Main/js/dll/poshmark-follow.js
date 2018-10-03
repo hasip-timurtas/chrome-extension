@@ -4,7 +4,8 @@ async function FollowUser(userId){
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'User-agent': 'your bot 0.1'
         },
       });
 }
@@ -12,6 +13,14 @@ async function FollowUser(userId){
 async function Basla(){
     // login kontrol
     console.log('Shares başlıyor. :)')
+
+    var hata = $( ".error-image-wrapper" ).length
+    if(hata > 0){
+        console.log('Hata var')
+        await sleep(1)
+        window.location.reload()
+    }
+    
     await sleep(2)
     var userPic = $('.user-pic-bck')
     if(userPic.length == 0){
@@ -34,7 +43,7 @@ async function Basla(){
         console.log(userId, ' takip edildi')
     });
 
-    await sleep(15)
+    await sleep(5)
     window.location.reload()
 }
 
