@@ -1,7 +1,7 @@
 var _db;
 var _ws;
 
-setTimeout(()=>Start(), 2000)
+setTimeout(()=>Start(), 5000)
 
 
 async function Start(){
@@ -49,7 +49,7 @@ function WebSocketInit(){
           
           _ws.onerror = (error) => {
               console.log(error)
-              _db.ref('/Abritage-in-site/cryptopia-ws-error').set(error)
+              _db.ref('cry/ws-error').set(error)
           }
 
           _ws.onclose =() => window.location.reload()
@@ -62,7 +62,7 @@ function WebSocketInit(){
                   var coin = data.M[0].A[0].Market.split('_')[0]
                   if(!mainMarkets.includes(coin)){
                       console.log(coin)
-                    _db.ref('/Abritage-in-site/cryptopia-ws').set(coin)
+                    _db.ref('cry/ws').set(coin)
                   }
 
               }
