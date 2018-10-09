@@ -76,33 +76,35 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
             runAt: "document_end"
         });
 
+        /*
         if(_bot){ // bot aktifse cry-ws de çalıştır
             chrome.tabs.executeScript(tabId, {
                 code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/cry-ws.js?v='+ Math.random(); document.head.appendChild(i);`,
                 runAt: "document_end"
             });
         }
-
+        */
         if (tab.url.includes("/Exchange?market=")) {
             chrome.tabs.executeScript(tabId, {
                 code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/cryMarket.js?v='+ Math.random(); document.head.appendChild(i);`,
                 runAt: "document_end"
             });
         }
-/*
+        /*
         if (tab.url.includes("/TradeHistory")) {
             chrome.tabs.executeScript(tabId, {
                 code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/tradeHistoryDetay.js?v='+ Math.random(); document.head.appendChild(i);",
                 runAt: "document_end"
             });
         }
-*/
+
         if (tab.url.includes("/Balances")) {
             chrome.tabs.executeScript(tabId, {
                 code: "var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/balanceToplam.js?v='+ Math.random(); document.head.appendChild(i);",
                 runAt: "document_end"
             });
         }
+        */
     }
 
     if (tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {  
@@ -1234,7 +1236,7 @@ function LoadMessaging(){
 function BilesenleriCalistir(){
     setTimeout(BackgroundYenile, 1000 * _sayacSuresi);
     YobitInvestKontrol()
-    CryWebsocketAcKapa()
+    //CryWebsocketAcKapa()
     //freecoinBotBasla()
 }
 
