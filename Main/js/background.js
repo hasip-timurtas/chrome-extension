@@ -430,7 +430,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
         }
 
         e.name = e.MarketAssetCode + "/" + e.BaseCurrencyCode;
-        e.tutar = 10000, e.type = 'SB', e.userId = 2, e.status = 'A', e.marketId = e.MarketID, e.zararinaSat = 'D'
+        e.tutar = 5000, e.type = 'SB', e.userId = 2, e.status = 'A', e.marketId = e.MarketID, e.zararinaSat = 'D'
 
         e.guncelMarket = guncelMarket
         e.guncelYuzde = Math.round(((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100))
@@ -831,7 +831,7 @@ function wsMarketData(market_id) {
 
     md_ws[market_id].onclose = function(evt) {
      // await sleep(3)
-      console.log('Bağlantı kapandı tekrar açılacak')
+      console.log('Bağlantı kapandı tekrar açılacak', wsMarket)
       md_ws[market_id] = null
       setTimeout(function() {
         wsMarketData(market_id); // 2 saniye sonra tekrar bağlan.

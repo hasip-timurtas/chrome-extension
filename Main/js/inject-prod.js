@@ -10,7 +10,7 @@ class InjectProd {
     this.secilenMarket = marketSum.result // JSON.parse($('body').attr('datam'))
     this.guncelAlimSatimYuzdeFarki = Math.round((this.secilenMarket.AskPrice - this.secilenMarket.BidPrice) / this.secilenMarket.BidPrice * 100)
     this.yuzde = Number(this.GetParameterByName('yuzde'))
-    this.bizimTutarin3te1i = this.yuzde / 3 * 2
+    this.bizimTutarin3te1i = this.yuzde / 3 * 1
     this.DbGuncelle()
     this.AlimSatimKontrol()
   }
