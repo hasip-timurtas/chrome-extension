@@ -259,7 +259,7 @@ class InjectProd {
     if (alimSatimYuzdeFarki >= this.bizimTutarin3te1i ) return satacagiFiyat
       
     // Yukarıdaki değilse kârını koy arka sıralarda dursun
-    return this.sonBuyPrice + (this.sonBuyPrice / 100 * this.yuzde)
+    return this.sonBuyPrice + (this.sonBuyPrice / 100 * this.bizimTutarin3te1i)
   }
 
   SellBozsunMu() { // Yüzde farkı için
