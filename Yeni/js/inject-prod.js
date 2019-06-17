@@ -186,7 +186,7 @@ class InjectProd {
     var type = this.GetParameterByName('type')
     const sellAmount = this.secilenMarket.BidPrice *  Number($('#primary-balance-clickable').html())
     
-    if (type == 'S' || this.secilenMarket.Volume < 100000) {
+    if (type == 'S' || this.secilenMarket.Volume < 50000) {
       console.log('Alış iptal çünkü sadece satış girildi veya volume 50 binden düşük.')
       return false
     }

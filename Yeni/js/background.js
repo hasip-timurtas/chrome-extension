@@ -332,16 +332,16 @@ async function KontroleUyan(markets) { // DB dekileri çektik bunların arasınd
 async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında yüzde koşuluna uyanları eleyip öyle tabları açıcaz.
     await LoadBalancesAndOrders()
     var openOrderlerim = _openOrders.map(e=> e.marketName);
-
+    var yasakliMarketler = ["OEN"]
     var markets = _getMarkets.data.result.filter(e => e.BaseCurrencyCode == "DOGE");
     _userDbMarketler = markets.filter(e => {
         var guncelMarket = _marketOzetler.find(mo => mo.MarketID == e.MarketID)
-        if (!guncelMarket) {
-            return false
-        }
+        
+        if (!guncelMarket) return false
+        if(yasakliMarketler.includes(e.MarketAssetCode)) return false
 
         e.name = e.MarketAssetCode + "/" + e.BaseCurrencyCode;
-        e.tutar = 5000, e.type = 'SB', e.userId = 2, e.status = 'A', e.marketId = e.MarketID, e.zararinaSat = 'D'
+        e.tutar = 10000, e.type = 'SB', e.userId = 2, e.status = 'A', e.marketId = e.MarketID, e.zararinaSat = 'D'
 
         e.guncelMarket = guncelMarket
         e.guncelYuzde = Math.round(((guncelMarket.AskPrice - guncelMarket.BidPrice) / guncelMarket.BidPrice * 100))
@@ -361,7 +361,8 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
         } else if (e.guncelMarket.Volume >= 100000) {
             e.tutar = e.tutar
             e.yuzde = e.yuzde * 0.7
-        } else if (e.guncelMarket.Volume >= 50000) {
+        } 
+        else if (e.guncelMarket.Volume >= 50000) {
             e.tutar = e.tutar * 0.5
             e.yuzde = e.yuzde
         }
