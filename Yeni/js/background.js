@@ -465,18 +465,6 @@ async function LoadOpenOrders2() {
     return openOrdersTutar
 }
 
-async function LoadOpenOrdersForCoinexchangeBalance() {
-    openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/1").then()
-    openOrdersTutar = 0
-    $($.parseHTML(openOrdersHtml)).find("tr[id^='live_order']").each(function (){
-        var type = $(this).children().eq(1).text().trim();
-        var marketName = $(this).children().eq(2).text().trim();
-        var netTotal = Number($(this).children().eq(9).text().trim().replace(',',''));
-        openOrdersTutar += netTotal
-    })
-    return openOrdersTutar
-}
-
 async function jqueryIleSayfaYuklet(){
  console.log('jqueryIleSayfaYukvar Başladı');
  
