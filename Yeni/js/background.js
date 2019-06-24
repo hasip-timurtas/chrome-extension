@@ -429,6 +429,7 @@ async function LoadBalancesAndOrders(){
 }
 
 async function LoadOpenOrders() {
+    _openOrders = [] 
     const openOrders1Toplam = await LoadOpenOrders1()
     const openOrders2Toplam = await LoadOpenOrders2()
     const toplamOrders = openOrders1Toplam + openOrders2Toplam
@@ -438,7 +439,7 @@ async function LoadOpenOrders() {
 async function LoadOpenOrders1() {
     openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/1").then()
     openOrdersTutar = 0
-    _openOrders = [] 
+    
     $($.parseHTML(openOrdersHtml)).find("tr[id^='live_order']").each(function (){
         var type = $(this).children().eq(1).text().trim();
         var marketName = $(this).children().eq(2).text().trim();
@@ -453,7 +454,6 @@ async function LoadOpenOrders1() {
 async function LoadOpenOrders2() {
     openOrdersHtml = await $.get( "https://www.coinexchange.io/orders/page/2").then()
     openOrdersTutar = 0
-    _openOrders = [] 
     $($.parseHTML(openOrdersHtml)).find("tr[id^='live_order']").each(function (){
         var type = $(this).children().eq(1).text().trim();
         var marketName = $(this).children().eq(2).text().trim();
