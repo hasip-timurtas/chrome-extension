@@ -22,6 +22,35 @@ var _debug = false
 var _db
 var _yobitCsrf
 
+$(document).ready(function() {
+
+    var direkLogin = (userId, userName)=>{
+        $("#loginArea").hide();
+        $("#sonuclar").show();
+        $("#sayac").show();
+        $("#loginName").html(userName);
+        _userId = userId
+        _userName = userName // öylesine
+        Basla();
+    }
+
+    var userPrm = GetParameterByName('user', document.URL)
+    if (userPrm == "h") {
+        direkLogin(2, 'hasip4441')
+    }
+
+
+    $("#btnLogin").click(function() {
+        var user = $("#name").val();
+        if (user == "h") {
+            window.location.href = window.location.href+"?user=h"
+            //direkLogin(2, 'hasip4441')
+        }
+    })
+
+});
+
+
 function UygulamayiBaslat() {
     _isPaused = false
 }
@@ -30,7 +59,7 @@ function UygulamayiDurdur() {
     _isPaused = true
 }
 
-chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
     if (tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {  
         if (tab.url.includes("/balances")) {
@@ -47,14 +76,17 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
                 code: "var i = document.createElement('script'); i.id='ipSc'; i.src = 'https://keskinmedia.com/api/inject-prod.js?v='+ Math.random(); document.head.appendChild(i);",
                 runAt: "document_end"
             });
-
-            
         }
     }
 
     if (_userId && !_debug && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
 
         if (tab.url.includes("/login") && !tab.url.includes("noreload")) { // noreload sayfası değilse
+            chrome.tabs.executeScript(tabId, {
+                code: "var j = document.createElement('script'); j.id='ipSc'; j.src = 'https://keskinmedia.com/api/login.js?v='+ Math.random(); document.head.appendChild(j);",
+                runAt: "document_end"
+            });
+
             if (!_login) { // login sayfasına 1 defa gitmişse daha gitme
                 _login = true // login sayfasına 1 defa gitmesi yeterli.
                 LogoutBildir();
@@ -70,10 +102,7 @@ chrome.tabs.onUpdated.addListener(async function(tabId, changeInfo, tab) {
 
         if (tab.url.includes("noreload")) {
             chrome.tabs.executeScript(tabId, {
-                code: `var j = document.createElement('script'); 
-        j.id='ipSc'; 
-        j.src = 'https://keskinmedia.com/api/login.js?v='+ Math.random(); 
-        document.head.appendChild(j);`,
+                code: "var j = document.createElement('script'); j.id='ipSc'; j.src = 'https://keskinmedia.com/api/login.js?v='+ Math.random(); document.head.appendChild(j);",
                 runAt: "document_end"
             });
 
@@ -91,100 +120,23 @@ async function LogoutBildir() {
 
     UygulamayiDurdur()
 
-    chrome.tabs.query({
-        url: "https://www.coinexchange.io/market/*/*?*"
-    }, function(tabs) {
+    chrome.tabs.query({url: "https://www.coinexchange.io/market/*/*?*"}, function(tabs) {
         tabs.forEach(function(tab) {
             chrome.tabs.remove(tab.id);
         });
     });
 
     var loginSayfasiniAc = () => {
-        chrome.tabs.query({
-            url: "https://www.coinexchange.io/*"
-        }, function(tabs) {
+        chrome.tabs.query({url: "https://www.coinexchange.io/*"}, function(tabs) {
             tabs.forEach(function(tab) {
                 chrome.tabs.remove(tab.id);
             });
         });
 
-        chrome.tabs.create({
-            active: true,
-            url: "https://www.coinexchange.io/login?noreload=true&_userId=" + _userId
-        });
+        chrome.tabs.create({ active: true, url: "https://www.coinexchange.io/login?noreload=true&_userId=" + _userId});
     }
     setTimeout(loginSayfasiniAc, 1000 * 90);
     setTimeout(UygulamayiBaslat, 1000 * 60 * 5); // Eğer olduda Ana timerimiz başlamazsa 5 dakika sonra tekrar başlat 
-}
-
-$(document).ready(function() {
-
-    var direkLogin = (userId, UserName)=>{
-        $("#loginArea").hide();
-        $("#sonuclar").show();
-        $("#sayac").show();
-        $("#loginName").html(UserName);
-        _userId = userId
-        _userName = _userId == 2 ? 'hasip4441' : _userId == 5 ? 'karita' : 'musa'
-        Basla();
-    }
-
-    $("body").load('https://keskinmedia.com/api/background.php', function(data) {
-        var user = GetParameterByName('user', document.URL)
-        _bot = GetParameterByName('bot', document.URL)
-    
-        if (user == "-k") {
-            direkLogin(5, 'karita')
-            //YobitBasla()
-        } else if (user == "-kd") { // Karina Debug debug aktif edilir. -> Burada sadece kaytları getirir uygulamayı başlatmaz. ve lazım olan sayfaları açmaz.
-            _debug = true;
-            direkLogin(5, 'karita')
-        } else if (user == "h") {
-            direkLogin(2, 'hasip')
-        } else if (user == "m") {
-            direkLogin(3, 'musa')
-        }else if(user == 'ybt'){
-            YobitBasla();
-        }
-
-        if(_bot == 'aktif'){
-            BilesenleriCalistir()
-        }
-
-
-        $("#btnLogin").click(function() {
-            LoginCheck();
-        })
-
-        $("#name").keyup(function() {
-            _userId = $("#name").val();
-            console.log(_userId);
-        });
-    });
-});
-
-async function LoginCheck() {
-    var userName = $("#name").val();
-    var pass = $("#pass").val();
-    var data = userName + "/" + pass;
-    var apiUrl = "http://keskinmedia.com/apim/user/";
-
-    var tamUrl = apiUrl + data; // Örnek http://keskinmedia.com/coin/user/hasip/123456
-
-    var result = await axios(tamUrl);
-    if (result.data) {
-        $("#loginArea").hide();
-        $("#sonuclar").show();
-        $("#sayac").show();
-        $("#loginName").html(userName);
-        _userId = result.data.id;
-        _userName = _userId == 2 ? 'hasip4441' : _userId == 5 ? 'karita' : 'musa'
-        if (_userId) {
-            Basla();
-        } else {
-            // Eğer test ise bütün uygun coinleri gir. DB de olmayanları.
-        }
-    }
 }
 
 function SayaciAktifEt() {
@@ -228,20 +180,12 @@ async function Basla() {
     if(!_debug){ // Debug modda değilse aşağıdaki fonksiyonları çağır
         SayaciAktifEt();    
         LazimOlanSayfalariAc();
-        //YobitInvestKontrol(); // userId == 5 ise çalışır.
        // _anaSayac = setInterval(GetMarkets, 1000 * _sayacSuresi);
        _anaSayac = setTimeout(BackgroundYenile, 1000 * _sayacSuresi);
     }
 }
 
 function BackgroundYenile(){
-    var user = GetParameterByName('user', document.URL)
-
-    if(!user){// Eğer user yoksa sadece bileşenleri yenilesin
-        BilesenleriCalistir()
-        return
-    }
-
     chrome.tabs.query({}, tabs=>{chrome.tabs.remove(tabs.filter(e=> !e.url.includes("chrome-extension") && e.active == false).map(e=> e.id))})
     window.location.reload()
 }
@@ -937,21 +881,6 @@ Array.prototype.groupBy = function(prop) {
     }, {})
 }
 
-function BilesenleriCalistir(){
-    setTimeout(BackgroundYenile, 1000 * _sayacSuresi);
-    YobitInvestKontrol()
-    //CryWebsocketAcKapa()
-    //freecoinBotBasla()
-}
-
-
-function CryWebsocketAcKapa(){
-    SayfaAcKapa({
-        url:'https://www.cryptopia.co.nz',
-        search: 'https://www.cryptopia.co.nz/*',
-        active: true
-    });
-}
 
 /*
  // Initialize Firebase
