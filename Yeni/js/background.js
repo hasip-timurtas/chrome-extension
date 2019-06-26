@@ -280,7 +280,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
     var markets = _getMarkets.data.result.filter(e => e.BaseCurrencyCode == "DOGE");
     _userDbMarketler = markets.filter(e => {
         var guncelMarket = _marketOzetler.find(mo => mo.MarketID == e.MarketID)
-        
+
         if (!guncelMarket) return false
         if(yasakliMarketler.includes(e.MarketAssetCode)) return false
 
@@ -311,7 +311,7 @@ async function KontroleUyanDoge() { // DB dekileri çektik bunların arasında y
             e.yuzde = e.yuzde
         }
 
-        if (openOrderlerim.includes(e.name) || Number(e.amount.total) > 0.00001) { // Open ordersta bu market varsa direk al
+        if (openOrderlerim.includes(e.name) || Number(e.amount.total) > 1) { // Open ordersta bu market varsa direk al
             return true
         }
 
