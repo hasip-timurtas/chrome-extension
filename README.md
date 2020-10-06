@@ -1,1 +1,1 @@
-# chrome-basic
+# Personal chrome extension for managing my stuff
